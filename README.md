@@ -1,4 +1,4 @@
-# Claude Autoresearch
+# Claude Autoresearch Skill
 
 > Turn [Claude Code](https://docs.anthropic.com/en/docs/claude-code) into a relentless improvement engine.
 
