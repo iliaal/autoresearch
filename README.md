@@ -110,19 +110,7 @@ Before looping, Claude performs a one-time setup:
 
 **Option A — Plugin install (recommended):**
 
-First, register the marketplace (one-time setup):
-
-```bash
-/plugin marketplace add https://github.com/uditgoenka/autoresearch
-```
-
-Then install:
-
-```bash
-/plugin install autoresearch@autoresearch
-```
-
-If the marketplace command doesn't work, add manually to `~/.claude/plugins/known_marketplaces.json`:
+**Step 1:** Register the autoresearch marketplace (one-time). Add this entry to `~/.claude/plugins/known_marketplaces.json`:
 
 ```json
 {
@@ -132,7 +120,15 @@ If the marketplace command doesn't work, add manually to `~/.claude/plugins/know
 }
 ```
 
-Then restart Claude Code and run `/plugin install autoresearch@autoresearch`.
+> If the file already has entries, add `"autoresearch": { ... }` as a new key alongside the existing ones.
+
+**Step 2:** Restart Claude Code, then run:
+
+```bash
+/plugin install autoresearch@autoresearch
+```
+
+That's it. All 6 commands are available immediately.
 
 **Option B — Manual copy:**
 
