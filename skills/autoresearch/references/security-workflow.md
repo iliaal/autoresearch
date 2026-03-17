@@ -19,7 +19,8 @@ Works with both unbounded and bounded modes:
 /autoresearch:security
 
 # Bounded — run exactly N security sweep iterations
-/loop 10 /autoresearch:security
+/autoresearch:security
+Iterations: 10
 
 # With target scope
 /autoresearch:security
@@ -263,7 +264,7 @@ iteration	vector	severity	owasp	stride	confidence	location	description
 #### Phase 6: Repeat
 
 - **Unbounded:** Keep finding vulnerabilities. Never stop. Never ask.
-- **Bounded (/loop N):** After N iterations, generate final report and stop.
+- **Bounded (Iterations: N):** After N iterations, generate final report and stop.
 - **Coverage tracking:** Every 5 iterations, print coverage summary.
 
 ### Coverage Summary Format
@@ -475,7 +476,7 @@ Never report a finding without proof. For each vulnerability:
 4. Show the impact (data leaked, access gained, etc.)
 
 ### Multi-Agent Attack Collaboration
-When using `/loop`, each iteration should build on prior findings:
+Each iteration should build on prior findings:
 - Iteration 1 finds open endpoint → Iteration 2 chains with IDOR
 - Iteration 3 finds missing rate limit → Iteration 4 tests brute force feasibility
 - Findings compound. Each iteration reads past findings for chaining opportunities.
@@ -580,7 +581,7 @@ Exit with non-zero code if findings meet or exceed a severity threshold. Designe
 **CI/CD usage:**
 ```bash
 # In GitHub Actions or CI scripts
-/loop 10 /autoresearch:security --fail-on critical
+claude -p "/autoresearch:security --fail-on critical --iterations 10"
 # Exit code 1 if any Critical findings → blocks the pipeline
 ```
 
@@ -590,7 +591,9 @@ After completing the audit, switches to standard autoresearch modify→verify lo
 
 ```
 /autoresearch:security --fix
-/loop 10 /autoresearch:security --fix
+
+/autoresearch:security --fix
+Iterations: 10
 ```
 
 **How it works:**
@@ -631,10 +634,12 @@ Flags can be combined:
 
 ```
 # Delta audit + auto-fix critical/high + block on remaining criticals
-/loop 15 /autoresearch:security --diff --fix --fail-on critical
+/autoresearch:security --diff --fix --fail-on critical
+Iterations: 15
 
 # Quick delta check in CI
-/loop 5 /autoresearch:security --diff --fail-on high
+/autoresearch:security --diff --fail-on high
+Iterations: 5
 ```
 
 **Execution order when combined:**
@@ -696,9 +701,9 @@ jobs:
         run: |
           # Delta mode on PRs, full audit on schedule
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            claude -p "/loop 5 /autoresearch:security --diff --fail-on critical"
+            claude -p "/autoresearch:security --diff --fail-on critical --iterations 5"
           else
-            claude -p "/loop 15 /autoresearch:security --fail-on high"
+            claude -p "/autoresearch:security --fail-on high --iterations 15"
           fi
 
       - name: Upload Security Report

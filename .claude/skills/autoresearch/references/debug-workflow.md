@@ -17,7 +17,8 @@ Autonomous bug-hunting loop that applies the scientific method iteratively. Does
 /autoresearch:debug
 
 # Bounded — exactly N investigation iterations
-/loop 20 /autoresearch:debug
+/autoresearch:debug
+Iterations: 20
 
 # Focused scope
 /autoresearch:debug
@@ -454,8 +455,11 @@ Creates `debug/{YYMMDD}-{HHMM}-{debug-slug}/` with:
 /autoresearch:debug --fix
 
 # Or manually chain
-/loop 15 /autoresearch:debug    # hunt bugs
-/loop 20 /autoresearch:fix      # fix everything found
+/autoresearch:debug
+Iterations: 15
+
+/autoresearch:fix
+Iterations: 20
 ```
 
 When `--fix` is specified, after the debug loop completes, automatically switches to `/autoresearch:fix` targeting the discovered issues.

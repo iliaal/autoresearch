@@ -7,7 +7,7 @@ Detailed protocol for the autoresearch iteration loop. SKILL.md has the summary;
 Autoresearch supports two loop modes:
 
 - **Unbounded (default):** Loop forever until manually interrupted (`Ctrl+C`)
-- **Bounded:** Loop exactly N times when chained with `/loop N` (requires Claude Code v1.0.32+)
+- **Bounded:** Loop exactly N times when `Iterations: N` is set in the inline config (or `--iterations N` flag for CLI/CI)
 
 When bounded, track `current_iteration` against `max_iterations`. After the final iteration, print a summary and stop.
 
@@ -152,7 +152,7 @@ iteration  commit   metric   status   description
 
 Go to Phase 1. **NEVER STOP. NEVER ASK IF YOU SHOULD CONTINUE.**
 
-### Bounded Mode (with /loop N)
+### Bounded Mode (with Iterations: N)
 
 ```
 IF current_iteration < max_iterations:

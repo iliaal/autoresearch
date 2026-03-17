@@ -213,7 +213,7 @@ AskUserQuestion:
 ```
 
 If "Launch now — unlimited": invoke `/autoresearch` with the configuration.
-If "Launch now — bounded": ask for iteration count, then invoke `/loop N /autoresearch`.
+If "Launch now — bounded": ask for iteration count, then invoke `/autoresearch` with `Iterations: N` in the inline config.
 If "Copy config only": output the ready-to-paste command block and stop.
 
 ## Metric Suggestion Database

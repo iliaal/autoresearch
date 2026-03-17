@@ -1,7 +1,7 @@
 ---
 name: autoresearch
-description: Autonomous Goal-directed Iteration. Apply Karpathy's autoresearch principles to ANY task. Loops autonomously — modify, verify, keep/discard, repeat. Supports optional loop count via Claude Code's /loop command.
-version: 1.3.3
+description: Autonomous Goal-directed Iteration. Apply Karpathy's autoresearch principles to ANY task. Loops autonomously — modify, verify, keep/discard, repeat. Supports bounded iteration via Iterations: N inline config.
+version: 1.4.0
 ---
 
 # Claude Autoresearch — Autonomous Goal-directed Iteration
@@ -59,7 +59,8 @@ Load: `references/security-workflow.md` for full protocol.
 /autoresearch:security
 
 # Bounded — exactly 10 security sweep iterations
-/loop 10 /autoresearch:security
+/autoresearch:security
+Iterations: 10
 
 # With focused scope
 /autoresearch:security
@@ -70,13 +71,16 @@ Focus: authentication and authorization flows
 /autoresearch:security --diff
 
 # Auto-fix confirmed Critical/High findings after audit
-/loop 15 /autoresearch:security --fix
+/autoresearch:security --fix
+Iterations: 15
 
 # CI/CD gate — fail pipeline if any Critical findings
-/loop 10 /autoresearch:security --fail-on critical
+/autoresearch:security --fail-on critical
+Iterations: 10
 
 # Combined — delta audit + fix + gate
-/loop 15 /autoresearch:security --diff --fix --fail-on critical
+/autoresearch:security --diff --fix --fail-on critical
+Iterations: 15
 ```
 
 **Inspired by:**
@@ -143,7 +147,8 @@ Load: `references/ship-workflow.md` for full protocol.
 /autoresearch:ship --monitor 10
 
 # Prepare iteratively then ship
-/loop 5 /autoresearch:ship
+/autoresearch:ship
+Iterations: 5
 
 # Just check if something is ready to ship
 /autoresearch:ship --checklist-only
@@ -220,13 +225,9 @@ After the wizard completes, the user gets a ready-to-paste `/autoresearch` invoc
 - User says "work autonomously", "iterate until done", "keep improving", "run overnight" → run the loop
 - Any task requiring repeated iteration cycles with measurable outcomes → run the loop
 
-## Optional: Controlled Loop Count
+## Bounded Iterations
 
-By default, autoresearch loops **forever** until manually interrupted. However, users can optionally specify a **loop count** to limit iterations using Claude Code's built-in `/loop` command.
-
-> **Requires:** Claude Code v1.0.32+ (the `/loop` command was introduced in this version)
-
-### Usage
+By default, autoresearch loops **forever** until manually interrupted. To run exactly N iterations, add `Iterations: N` to your inline config.
 
 **Unlimited (default):**
 ```
@@ -236,29 +237,22 @@ Goal: Increase test coverage to 90%
 
 **Bounded (N iterations):**
 ```
-/loop 25 /autoresearch
+/autoresearch
 Goal: Increase test coverage to 90%
+Iterations: 25
 ```
 
-This chains `/autoresearch` with `/loop 25`, running exactly 25 iteration cycles. After 25 iterations, Claude stops and prints a final summary.
+After N iterations Claude stops and prints a final summary with baseline → current best, keeps/discards/crashes. If the goal is achieved before N iterations, Claude prints early completion and stops.
 
-### When to Use Bounded Loops
+### When to Use Bounded Iterations
 
 | Scenario | Recommendation |
 |----------|---------------|
 | Run overnight, review in morning | Unlimited (default) |
-| Quick 30-min improvement session | `/loop 10 /autoresearch` |
-| Targeted fix with known scope | `/loop 5 /autoresearch` |
-| Exploratory — see if approach works | `/loop 15 /autoresearch` |
-| CI/CD pipeline integration | `/loop N /autoresearch` (set N based on time budget) |
-
-### Behavior with Loop Count
-
-When a loop count is specified:
-- Claude runs exactly N iterations through the autoresearch loop
-- After iteration N, Claude prints a **final summary** with baseline → current best, keeps/discards/crashes
-- If the goal is achieved before N iterations, Claude prints early completion and stops
-- All other rules (atomic changes, mechanical verification, auto-rollback) still apply
+| Quick 30-min improvement session | `Iterations: 10` |
+| Targeted fix with known scope | `Iterations: 5` |
+| Exploratory — see if approach works | `Iterations: 15` |
+| CI/CD pipeline integration | `--iterations N` flag (set N based on time budget) |
 
 ## Setup Phase (Do Once)
 
@@ -287,7 +281,7 @@ Use a SINGLE `AskUserQuestion` call with these 4 questions:
 |---|--------|----------|---------|
 | 5 | `Verify` | "What command produces the metric? (I'll dry-run it to confirm)" | Suggested commands from detected tooling |
 | 6 | `Guard` | "Any command that must ALWAYS pass? (prevents regressions)" | "npm test", "tsc --noEmit", "npm run build", "Skip — no guard" |
-| 7 | `Launch` | "Ready to go?" | "Launch (unlimited)", "Launch with /loop N", "Edit config", "Cancel" |
+| 7 | `Launch` | "Ready to go?" | "Launch (unlimited)", "Launch with iteration limit", "Edit config", "Cancel" |
 
 **After Batch 2:** Dry-run the verify command. If it fails, ask user to fix or choose a different command. If it passes, proceed with launch choice.
 

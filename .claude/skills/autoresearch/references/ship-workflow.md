@@ -19,7 +19,8 @@ Works with bounded mode for iterative pre-ship preparation:
 /autoresearch:ship
 
 # Bounded preparation — iterate N times before shipping
-/loop 10 /autoresearch:ship
+/autoresearch:ship
+Iterations: 10
 
 # Ship specific artifact
 /autoresearch:ship

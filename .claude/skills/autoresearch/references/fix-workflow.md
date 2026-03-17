@@ -17,7 +17,8 @@ Autonomous fix loop that takes a broken state and iteratively repairs it until e
 /autoresearch:fix
 
 # Bounded — exactly N fix iterations
-/loop 30 /autoresearch:fix
+/autoresearch:fix
+Iterations: 30
 
 # With explicit target
 /autoresearch:fix
@@ -41,7 +42,7 @@ Use ONE `AskUserQuestion` call with all 4 questions:
 | 1 | `Fix What` | "Found [N] test failures, [M] type errors, [K] lint errors. What should I fix?" | "Fix everything (recommended)", "Only tests", "Only type errors", "Only lint" |
 | 2 | `Guard` | "What command must ALWAYS pass? (prevents fixes from breaking other things)" | "npm test", "tsc --noEmit", "npm run build", "Skip — no guard" |
 | 3 | `Scope` | "Which files can I modify?" | Suggested globs from error locations + "All project files" |
-| 4 | `Launch` | "Ready to fix?" | "Fix until zero errors", "Fix with /loop N", "Edit config", "Cancel" |
+| 4 | `Launch` | "Ready to fix?" | "Fix until zero errors", "Fix with iteration limit", "Edit config", "Cancel" |
 
 **IMPORTANT:** Always ask all 4 questions in a single call — never one at a time. Users need the full picture (what's broken, what's the guard, what's the scope) to make informed decisions together.
 
@@ -583,8 +584,11 @@ When errors appear only in CI (not locally):
 
 ```bash
 # Debug first, then fix what was found
-/loop 15 /autoresearch:debug
-/loop 30 /autoresearch:fix --from-debug
+/autoresearch:debug
+Iterations: 15
+
+/autoresearch:fix --from-debug
+Iterations: 30
 
 # Fix with guard
 /autoresearch:fix
@@ -598,7 +602,8 @@ Guard: npm test
 /autoresearch:fix
 
 # Bounded sprint — fix as many as you can in 20 iterations
-/loop 20 /autoresearch:fix
+/autoresearch:fix
+Iterations: 20
 ```
 
 ## Output Directory
@@ -613,8 +618,12 @@ Creates `fix/{YYMMDD}-{HHMM}-{fix-slug}/` with:
 
 ```bash
 # Full pipeline: debug → fix → ship
-/loop 15 /autoresearch:debug
-/loop 30 /autoresearch:fix --from-debug --guard "npm test"
+/autoresearch:debug
+Iterations: 15
+
+/autoresearch:fix --from-debug --guard "npm test"
+Iterations: 30
+
 /autoresearch:ship
 
 # Fix only critical issues, then verify clean

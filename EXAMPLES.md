@@ -21,7 +21,8 @@ Verify: npm test -- --coverage | grep "All files"
 Bounded variant — run 20 iterations then stop:
 
 ```
-/loop 20 /autoresearch
+/autoresearch
+Iterations: 20
 Goal: Increase test coverage from 72% to 90%
 Scope: src/**/*.test.ts, src/**/*.ts
 Metric: coverage % (higher is better)
@@ -33,7 +34,8 @@ Claude adds tests one-by-one. Each iteration: write test → run coverage → ke
 ### Reduce bundle size
 
 ```
-/loop 15 /autoresearch
+/autoresearch
+Iterations: 15
 Goal: Reduce production bundle size
 Scope: src/**/*.tsx, src/**/*.ts
 Metric: bundle size in KB (lower is better)
@@ -45,7 +47,8 @@ Claude tries: tree-shaking unused imports, lazy-loading routes, replacing heavy 
 ### Fix flaky tests
 
 ```
-/loop 10 /autoresearch
+/autoresearch
+Iterations: 10
 Goal: Zero flaky tests (all tests pass 5 consecutive runs)
 Scope: src/**/*.test.ts
 Metric: failure count across 5 runs (lower is better)
@@ -65,7 +68,8 @@ Verify: npm run bench:api | grep "p95"
 Quick 30-minute sprint:
 
 ```
-/loop 10 /autoresearch
+/autoresearch
+Iterations: 10
 Goal: API response time under 100ms (p95)
 Scope: src/api/**/*.ts, src/services/**/*.ts
 Metric: p95 response time in ms (lower is better)
@@ -75,7 +79,8 @@ Verify: npm run bench:api | grep "p95"
 ### Eliminate TypeScript `any` types
 
 ```
-/loop 25 /autoresearch
+/autoresearch
+Iterations: 25
 Goal: Eliminate all TypeScript `any` types
 Scope: src/**/*.ts
 Metric: count of `any` occurrences (lower is better)
@@ -85,7 +90,8 @@ Verify: grep -r ":\s*any" src/ --include="*.ts" | wc -l
 ### Reduce lines of code
 
 ```
-/loop 20 /autoresearch
+/autoresearch
+Iterations: 20
 Goal: Reduce lines of code in src/services/ by 30% while keeping all tests green
 Metric: LOC count (lower is better)
 Verify: npm test && find src/services -name "*.ts" | xargs wc -l | tail -1
@@ -98,7 +104,8 @@ Verify: npm test && find src/services -name "*.ts" | xargs wc -l | tail -1
 ### Cold email optimization
 
 ```
-/loop 15 /autoresearch
+/autoresearch
+Iterations: 15
 Goal: Improve cold email reply rate prediction score
 Scope: content/email-templates/*.md
 Metric: readability score + personalization token count (higher is better)
@@ -110,7 +117,8 @@ Claude iterates on subject lines, opening hooks, CTAs, personalization variables
 ### Sales deck refinement
 
 ```
-/loop 10 /autoresearch
+/autoresearch
+Iterations: 10
 Goal: Reduce slide count while maintaining all key points
 Scope: content/sales-deck/*.md
 Metric: slide count (lower is better), constraint: key-points-checklist.md must all be present
@@ -120,7 +128,8 @@ Verify: node scripts/check-deck-coverage.js && wc -l content/sales-deck/*.md
 ### Objection handling docs
 
 ```
-/loop 20 /autoresearch
+/autoresearch
+Iterations: 20
 Goal: Cover all 20 common objections with responses under 50 words each
 Scope: content/objection-responses.md
 Metric: objections covered + avg word count per response (more covered + fewer words = better)
@@ -144,14 +153,16 @@ Verify: node scripts/seo-score.js --file content/blog/target-post.md
 Claude tweaks headings, keyword density, meta descriptions, internal links — one change per iteration. Run unlimited overnight, or bounded:
 
 ```
-/loop 25 /autoresearch
+/autoresearch
+Iterations: 25
 Goal: Maximize SEO score for target keywords
 ```
 
 ### Landing page copy
 
 ```
-/loop 15 /autoresearch
+/autoresearch
+Iterations: 15
 Goal: Maximize Flesch readability + keyword density for "AI automation"
 Scope: content/landing-pages/ai-automation.md
 Metric: readability_score * 0.7 + keyword_density_score * 0.3 (higher is better)
@@ -161,7 +172,8 @@ Verify: node scripts/content-score.js content/landing-pages/ai-automation.md
 ### Email sequence optimization
 
 ```
-/loop 20 /autoresearch
+/autoresearch
+Iterations: 20
 Goal: Optimize 7-day nurture sequence for clarity and CTA strength
 Scope: content/email-sequences/onboarding/*.md
 Metric: avg readability + CTA score per email (higher is better)
@@ -171,7 +183,8 @@ Verify: node scripts/score-email-sequence.js onboarding
 ### Ad copy variants
 
 ```
-/loop 25 /autoresearch
+/autoresearch
+Iterations: 25
 Goal: Generate and refine 20 ad copy variants, each under 90 chars with power words
 Scope: content/ads/facebook-q1.md
 Metric: variants meeting criteria (higher is better)
@@ -185,7 +198,8 @@ Verify: node scripts/validate-ad-copy.js
 ### Job description optimization
 
 ```
-/loop 15 /autoresearch
+/autoresearch
+Iterations: 15
 Goal: Improve job descriptions — bias-free language, clear requirements, inclusive tone
 Scope: content/job-descriptions/*.md
 Metric: inclusivity score from textio-style checker (higher is better)
@@ -195,7 +209,8 @@ Verify: node scripts/jd-inclusivity-score.js
 ### Policy document clarity
 
 ```
-/loop 10 /autoresearch
+/autoresearch
+Iterations: 10
 Goal: Reduce average reading level of HR policies to grade 8
 Scope: content/policies/*.md
 Metric: Flesch-Kincaid grade level (lower is better)
@@ -205,7 +220,8 @@ Verify: node scripts/readability.js content/policies/
 ### Interview question bank
 
 ```
-/loop 20 /autoresearch
+/autoresearch
+Iterations: 20
 Goal: Ensure all questions are behavioral (STAR format) + cover all competencies
 Scope: content/interview-questions.md
 Metric: STAR-format compliance % + competency coverage % (higher is better)
@@ -219,7 +235,8 @@ Verify: node scripts/interview-quality.js
 ### Runbook optimization
 
 ```
-/loop 15 /autoresearch
+/autoresearch
+Iterations: 15
 Goal: Reduce average runbook steps while maintaining completeness
 Scope: docs/runbooks/*.md
 Metric: avg steps per runbook (lower is better), constraint: all checklist items preserved
@@ -229,7 +246,8 @@ Verify: node scripts/runbook-audit.js
 ### Process documentation
 
 ```
-/loop 10 /autoresearch
+/autoresearch
+Iterations: 10
 Goal: Standardize all SOPs to template format with <100 words per step
 Scope: docs/sops/*.md
 Metric: template compliance % + avg words per step (higher compliance + lower words = better)
@@ -239,7 +257,8 @@ Verify: node scripts/sop-score.js
 ### Incident response playbooks
 
 ```
-/loop 20 /autoresearch
+/autoresearch
+Iterations: 20
 Goal: Ensure all playbooks have decision trees, escalation paths, rollback steps
 Scope: docs/incident-playbooks/*.md
 Metric: completeness checklist score (higher is better)
@@ -253,7 +272,8 @@ Verify: node scripts/playbook-completeness.js
 ### Google Ads copy optimization
 
 ```
-/loop 30 /autoresearch
+/autoresearch
+Iterations: 30
 Goal: Generate 50 ad headline variants (max 30 chars) with power words + CTA
 Scope: content/ads/google-search/*.md
 Metric: headlines meeting char limit + power word + CTA criteria (higher is better)
@@ -265,7 +285,8 @@ Claude generates headline variants, scores each for character limits, emotional 
 ### Landing page CRO
 
 ```
-/loop 15 /autoresearch
+/autoresearch
+Iterations: 15
 Goal: Maximize landing page quality score — clear CTA, social proof, urgency, mobile-friendly
 Scope: content/landing-pages/product-launch.md
 Metric: CRO checklist score (higher is better)
@@ -275,7 +296,8 @@ Verify: node scripts/cro-score.js content/landing-pages/product-launch.md
 ### Meta/Facebook ad copy
 
 ```
-/loop 25 /autoresearch
+/autoresearch
+Iterations: 25
 Goal: Create 30 primary text variants (max 125 chars) optimized for engagement
 Scope: content/ads/meta/*.md
 Metric: variants meeting criteria + avg engagement score (higher is better)
@@ -285,7 +307,8 @@ Verify: node scripts/meta-ad-validator.js
 ### A/B test hypothesis generation
 
 ```
-/loop 20 /autoresearch
+/autoresearch
+Iterations: 20
 Goal: Generate 20 testable hypotheses for checkout page, each with metric + expected lift
 Scope: content/experiments/checkout-hypotheses.md
 Metric: valid hypotheses with metric + lift prediction (higher is better)
@@ -295,7 +318,8 @@ Verify: node scripts/hypothesis-validator.js
 ### UTM campaign taxonomy
 
 ```
-/loop 10 /autoresearch
+/autoresearch
+Iterations: 10
 Goal: Standardize all campaign URLs with consistent UTM parameters
 Scope: content/campaigns/utm-tracker.csv
 Metric: UTM compliance % (higher is better)
@@ -305,7 +329,8 @@ Verify: node scripts/utm-validator.js
 ### Email subject line testing
 
 ```
-/loop 30 /autoresearch
+/autoresearch
+Iterations: 30
 Goal: Generate 40 subject lines for product launch — max 50 chars, personalization token, urgency
 Scope: content/emails/subject-lines.md
 Metric: lines meeting all criteria (higher is better)
@@ -319,7 +344,8 @@ Verify: node scripts/subject-line-scorer.js
 ### Data pipeline quality
 
 ```
-/loop 20 /autoresearch
+/autoresearch
+Iterations: 20
 Goal: Increase data validation pass rate from 85% to 99%
 Scope: scripts/validators/*.py
 Metric: validation pass rate % (higher is better)
@@ -329,7 +355,8 @@ Verify: python scripts/run_validations.py | grep "pass_rate"
 ### SQL query optimization
 
 ```
-/loop 15 /autoresearch
+/autoresearch
+Iterations: 15
 Goal: Reduce total query execution time for dashboard queries
 Scope: queries/dashboard/*.sql
 Metric: total execution time in ms (lower is better)
@@ -339,7 +366,8 @@ Verify: psql -f scripts/bench-queries.sql | grep "total_ms"
 ### Report template automation
 
 ```
-/loop 10 /autoresearch
+/autoresearch
+Iterations: 10
 Goal: Standardize all weekly reports — consistent sections, KPI coverage, action items
 Scope: templates/reports/*.md
 Metric: template compliance score (higher is better)
@@ -363,7 +391,8 @@ Verify: uv run train.py --epochs 1 2>&1 | grep "val_bpb" | tail -1 | awk '{print
 ### Dockerfile optimization
 
 ```
-/loop 10 /autoresearch
+/autoresearch
+Iterations: 10
 Goal: Reduce Docker image size and build time
 Scope: Dockerfile, .dockerignore
 Metric: image size in MB (lower is better)
@@ -373,7 +402,8 @@ Verify: docker build -t bench . 2>&1 && docker images bench --format "{{.Size}}"
 ### CI/CD pipeline speed
 
 ```
-/loop 15 /autoresearch
+/autoresearch
+Iterations: 15
 Goal: Reduce CI pipeline duration from 12min to under 5min
 Scope: .github/workflows/*.yml
 Metric: pipeline duration in seconds (lower is better)
@@ -383,7 +413,8 @@ Verify: node scripts/estimate-ci-time.js
 ### Terraform/IaC compliance
 
 ```
-/loop 20 /autoresearch
+/autoresearch
+Iterations: 20
 Goal: Pass all tfsec security checks + reduce resource count
 Scope: infra/*.tf
 Metric: tfsec violations (lower is better)
@@ -397,7 +428,8 @@ Verify: tfsec . --format json | jq '.results | length'
 ### Accessibility audit
 
 ```
-/loop 25 /autoresearch
+/autoresearch
+Iterations: 25
 Goal: Reach WCAG 2.1 AA compliance — zero axe violations
 Scope: src/components/**/*.tsx
 Metric: axe violation count (lower is better)
@@ -407,7 +439,8 @@ Verify: npx playwright test a11y.spec.ts | grep "violations"
 ### Design token consistency
 
 ```
-/loop 20 /autoresearch
+/autoresearch
+Iterations: 20
 Goal: Replace all hardcoded colors/spacing with design tokens
 Scope: src/**/*.tsx, src/**/*.css
 Metric: hardcoded values count (lower is better)
@@ -438,7 +471,8 @@ Scope: src/api/**/*.ts
 ### Bounded bug hunt
 
 ```
-/loop 20 /autoresearch:debug
+/autoresearch:debug
+Iterations: 20
 Scope: src/auth/**/*.ts
 ```
 
@@ -474,7 +508,8 @@ Symptom: Regular users can access admin endpoints
 ### Example debug session output
 
 ```
-> /loop 10 /autoresearch:debug
+> /autoresearch:debug
+> Iterations: 10
 
 [Phase 1] Gathering symptoms...
   Tests: 3 failures, Lint: 0 errors, Types: 2 errors
@@ -535,16 +570,19 @@ Fixes type errors while ensuring tests keep passing.
 
 ```
 # Step 1: Hunt bugs
-/loop 15 /autoresearch:debug
+/autoresearch:debug
+Iterations: 15
 
 # Step 2: Fix what was found
-/loop 30 /autoresearch:fix --from-debug
+/autoresearch:fix --from-debug
+Iterations: 30
 ```
 
 ### Bounded fix sprint
 
 ```
-/loop 20 /autoresearch:fix
+/autoresearch:fix
+Iterations: 20
 ```
 
 Fix as many errors as possible in 20 iterations.
@@ -792,7 +830,8 @@ I'm going to sleep — iterate all night. Don't ask me anything.
 ### Pattern 2: "Controlled Sprint"
 
 ```
-/loop 15 /autoresearch
+/autoresearch
+Iterations: 15
 Goal: Increase test coverage from 72% to 85%
 Focus on the modules with lowest coverage first.
 ```
@@ -957,7 +996,8 @@ Launch now? → [Unlimited] [Bounded] [Copy only]
 /autoresearch:security
 
 # Bounded — exactly 10 security sweep iterations
-/loop 10 /autoresearch:security
+/autoresearch:security
+Iterations: 10
 
 # With focused scope
 /autoresearch:security
@@ -1043,7 +1083,8 @@ Each iteration targets uncovered OWASP categories:
 ### Example session output
 
 ```
-> /loop 10 /autoresearch:security
+> /autoresearch:security
+> Iterations: 10
 
 [Setup] Scanning codebase...
   Tech stack: Next.js 16, TypeScript, MongoDB, JWT auth
@@ -1107,7 +1148,7 @@ Higher = more thorough. Max theoretical: 100.
 | `--fix` | Auto-fix confirmed Critical/High after audit |
 | `--fail-on <severity>` | Exit non-zero for CI/CD gating (`critical`, `high`, `medium`) |
 
-Flags combine: `/loop 15 /autoresearch:security --diff --fix --fail-on critical`
+Flags combine: `/autoresearch:security --diff --fix --fail-on critical --iterations 15`
 
 Execution order: `--diff` narrows scope → audit runs → `--fix` remediates → `--fail-on` gates remaining findings.
 
@@ -1132,9 +1173,9 @@ jobs:
       - name: Run Security Audit
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            claude -p "/loop 5 /autoresearch:security --diff --fail-on critical"
+            claude -p "/autoresearch:security --diff --fail-on critical --iterations 5"
           else
-            claude -p "/loop 15 /autoresearch:security --fail-on high"
+            claude -p "/autoresearch:security --fail-on high --iterations 15"
           fi
       - name: Upload Report
         uses: actions/upload-artifact@v4
@@ -1147,13 +1188,13 @@ jobs:
 
 | Scenario | Recommendation |
 |----------|---------------|
-| Before a major release | `/loop 15 /autoresearch:security` |
-| Quick sanity check | `/loop 5 /autoresearch:security` |
+| Before a major release | `/autoresearch:security` with `Iterations: 15` |
+| Quick sanity check | `/autoresearch:security` with `Iterations: 5` |
 | Comprehensive overnight | `/autoresearch:security` (unlimited) |
-| CI/CD gate | `/loop 10 /autoresearch:security --fail-on critical` |
-| PR review (changed files) | `/loop 5 /autoresearch:security --diff` |
+| CI/CD gate | `/autoresearch:security --fail-on critical --iterations 10` |
+| PR review (changed files) | `/autoresearch:security --diff --iterations 5` |
 | After auth/API changes | `/autoresearch:security --diff --fix` |
-| Compliance preparation | `/loop 20 /autoresearch:security` |
+| Compliance preparation | `/autoresearch:security` with `Iterations: 20` |
 
 ---
 
@@ -1195,7 +1236,8 @@ Target: decks/q1-enterprise-proposal.pdf
 ### Iterate on readiness then ship
 
 ```
-/loop 5 /autoresearch:ship
+/autoresearch:ship
+Iterations: 5
 ```
 
 ### Just check readiness
@@ -1214,10 +1256,10 @@ Target: decks/q1-enterprise-proposal.pdf
 
 ```bash
 # Full combo: delta security + auto-fix + CI gate
-/loop 15 /autoresearch:security --diff --fix --fail-on critical
+/autoresearch:security --diff --fix --fail-on critical --iterations 15
 
 # Quick delta check, block on criticals
-/loop 5 /autoresearch:security --diff --fail-on critical
+/autoresearch:security --diff --fail-on critical --iterations 5
 
 # Overnight comprehensive + auto-remediation
 /autoresearch:security --fix
@@ -1234,8 +1276,8 @@ Target: decks/q1-enterprise-proposal.pdf
 # Ship with post-deploy monitoring (10 minutes)
 /autoresearch:ship --type deployment --monitor 10
 
-# Iterate on readiness
-/loop 5 /autoresearch:ship
+# Iterate on readiness (5 preparation iterations)
+/autoresearch:ship --iterations 5
 
 # Just check if ready
 /autoresearch:ship --checklist-only
@@ -1342,26 +1384,25 @@ Adapt the loop to your domain. The **principles** are universal; the **metrics**
 
 ---
 
-## Controlled Iterations with `/loop`
+## Bounded Iterations
 
-> **Requires:** Claude Code **v1.0.32+**
-
-By default, autoresearch loops **forever**. Use `/loop N` for fixed iterations.
+By default, autoresearch loops **forever**. Add `Iterations: N` to your inline config for fixed iterations.
 
 ```
-/loop 25 /autoresearch
+/autoresearch
 Goal: Increase test coverage to 90%
+Iterations: 25
 ```
 
-### When to use bounded loops
+### When to use bounded iterations
 
 | Scenario | Recommendation |
 |----------|---------------|
 | Run overnight | Unlimited (default) |
-| Quick 30-min session | `/loop 10 /autoresearch` |
-| Targeted fix | `/loop 5 /autoresearch` |
-| Exploratory | `/loop 15 /autoresearch` |
-| CI/CD integration | `/loop N /autoresearch` (set N based on time budget) |
+| Quick 30-min session | `Iterations: 10` |
+| Targeted fix | `Iterations: 5` |
+| Exploratory | `Iterations: 15` |
+| CI/CD integration | `--iterations N` flag (set N based on time budget) |
 
 ### Final summary format
 

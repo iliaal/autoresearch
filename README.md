@@ -7,7 +7,7 @@
 Based on [Karpathy's autoresearch](https://github.com/karpathy/autoresearch) — constraint + mechanical metric + autonomous iteration = compounding gains.
 
 [![Claude Code Skill](https://img.shields.io/badge/Claude_Code-Skill-blue?logo=anthropic&logoColor=white)](https://docs.anthropic.com/en/docs/claude-code)
-[![Version](https://img.shields.io/badge/version-1.3.3-blue.svg)](https://github.com/uditgoenka/autoresearch/releases)
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://github.com/uditgoenka/autoresearch/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Based on](https://img.shields.io/badge/Based_on-Karpathy's_Autoresearch-orange)](https://github.com/karpathy/autoresearch)
 [![Follow @iuditg](https://img.shields.io/badge/Follow-@iuditg-000000?style=flat&logo=x&logoColor=white)](https://x.com/intent/follow?screen_name=iuditg)
@@ -80,7 +80,7 @@ Before looping, Claude performs a one-time setup:
 | Command | What it does |
 |---------|--------------|
 | `/autoresearch` | Run the autonomous iteration loop (unlimited) |
-| `/loop N /autoresearch` | Run exactly N iterations then stop |
+| `Iterations: N` | Add to inline config to run exactly N iterations then stop |
 | `/autoresearch:plan` | Interactive wizard: Goal → Scope, Metric, Verify config |
 | `/autoresearch:security` | Autonomous STRIDE + OWASP + red-team security audit |
 | `/autoresearch:ship` | Universal shipping workflow (code, content, marketing, sales, research, design) |
@@ -94,12 +94,12 @@ Before looping, Claude performs a one-time setup:
 
 | I want to... | Use |
 |--------------|-----|
-| Improve test coverage / reduce bundle size / any metric | `/autoresearch` or `/loop N /autoresearch` |
+| Improve test coverage / reduce bundle size / any metric | `/autoresearch` (add `Iterations: N` for bounded runs) |
 | Don't know what metric to use | `/autoresearch:plan` |
 | Run a security audit | `/autoresearch:security` |
 | Ship a PR / deployment / release | `/autoresearch:ship` |
 | Optimize without breaking existing tests | Add `Guard: npm test` |
-| Hunt all bugs in a codebase | `/autoresearch:debug` or `/loop 20 /autoresearch:debug` |
+| Hunt all bugs in a codebase | `/autoresearch:debug` (add `Iterations: 20` for bounded runs) |
 | Fix all errors (tests, types, lint) | `/autoresearch:fix` |
 | Debug then auto-fix | `/autoresearch:debug --fix` |
 | Check if something is ready to ship | `/autoresearch:ship --checklist-only` |
@@ -187,7 +187,8 @@ The wizard walks you through 5 steps: capture goal → define scope → define m
 Read-only security audit using STRIDE threat modeling, OWASP Top 10 sweeps, and red-team adversarial analysis with 4 hostile personas.
 
 ```
-/loop 10 /autoresearch:security
+/autoresearch:security
+Iterations: 10
 ```
 
 **What it does:** Codebase recon → asset inventory → trust boundaries → STRIDE threat model → attack surface map → autonomous testing loop → structured report.
@@ -233,9 +234,10 @@ Auto-detects what you're shipping (code PR, deployment, blog post, email campaig
 Scientific method meets autoresearch loop. Doesn't stop at one bug — iteratively hunts ALL bugs using falsifiable hypotheses, evidence-based investigation, and 7 investigation techniques.
 
 ```
-/loop 20 /autoresearch:debug
+/autoresearch:debug
 Scope: src/api/**/*.ts
 Symptom: API returns 500 on POST /users
+Iterations: 20
 ```
 
 **How it works:** Gather symptoms → Recon (map error surface) → Hypothesize (specific, testable) → Test (one experiment per iteration) → Classify (confirmed/disproven/inconclusive) → Log → Repeat.
@@ -270,7 +272,7 @@ Takes a broken state and iteratively repairs it until everything passes. ONE fix
 | `--category <type>` | Only fix specific type (test, type, lint, build) |
 | `--from-debug` | Read findings from latest debug session |
 
-**Chain them:** `/loop 15 /autoresearch:debug` then `/loop 30 /autoresearch:fix --from-debug`
+**Chain them:** Run `/autoresearch:debug` with `Iterations: 15`, then `/autoresearch:fix --from-debug` with `Iterations: 30`
 
 ---
 
@@ -364,7 +366,7 @@ A: Run `/autoresearch:plan` — it analyzes your codebase, suggests metrics, and
 A: Yes. Any language, framework, or domain. Copy the skill to `.claude/skills/autoresearch/` and the commands to `.claude/commands/autoresearch/`.
 
 **Q: How do I stop the loop?**
-A: `Ctrl+C` or use `/loop N /autoresearch` to run exactly N iterations. Claude commits before verifying, so your last successful state is always in git.
+A: `Ctrl+C` or add `Iterations: N` to your inline config to run exactly N iterations. Claude commits before verifying, so your last successful state is always in git.
 
 **Q: Can I use this for non-code tasks?**
 A: Absolutely. Sales emails, marketing copy, HR policies, runbooks — anything with a measurable metric. See [EXAMPLES.md](EXAMPLES.md).
