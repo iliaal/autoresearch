@@ -466,4 +466,4 @@ Iterations: 15
 Iterations: 20
 ```
 
-When `--fix` is specified, after the debug loop completes, automatically switches to `/autoresearch:fix` targeting the discovered issues.
+When `--fix` is specified, after the debug loop completes, automatically switches to `/autoresearch:fix --from-debug` targeting the discovered issues. The `--from-debug` flag tells fix to read findings from the latest debug session.

@@ -171,7 +171,7 @@ Pick the highest-priority unfixed item and make ONE focused change.
 ## Phase 4: Commit — Before Verification
 
 ```bash
-git add -A
+git add <modified-files>
 git commit -m "fix: [what was fixed] — [file:line]"
 ```
 

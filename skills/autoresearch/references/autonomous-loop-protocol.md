@@ -117,9 +117,9 @@ git diff --cached --quiet
 git commit -m "experiment(<scope>): <one-sentence description of what you changed and why>"
 ```
 
-**"Nothing to commit" handling:** If `git add -A` followed by `git diff --cached --quiet` shows no changes, the modification phase produced no actual diff. This is NOT a crash — log as `status=no-op` with description of what was attempted, skip verification, and proceed to next iteration. Do NOT create an empty commit.
+**"Nothing to commit" handling:** If `git add <files>` followed by `git diff --cached --quiet` shows no changes, the modification phase produced no actual diff. This is NOT a crash — log as `status=no-op` with description of what was attempted, skip verification, and proceed to next iteration. Do NOT create an empty commit.
 
-**WARNING about `git add -A`:** This stages ALL changes in the repo, including files outside the in-scope set. Before committing, run `git diff --cached --name-only` and verify that only in-scope files are staged. If unexpected files appear, unstage them with `git reset HEAD <file>` before committing.
+**WARNING:** NEVER use `git add -A` — it stages ALL files including .env, credentials, and user's unrelated work. Always use `git add <file1> <file2> ...` with explicit file paths. After staging, verify with `git diff --cached --name-only` that only in-scope files are staged.
 
 **Commit message format:** Use conventional commit format with `experiment` type: `experiment(<scope>): <description>`. This keeps compatibility with commit-lint while clearly marking autoresearch iterations. Example: `experiment(auth): increase timeout from 5s to 30s — hypothesis: reduces flaky test failures`.
 
@@ -200,7 +200,7 @@ ELIF metric_improved AND guard_failed:
     # Rework the optimization (max 2 attempts)
     FOR attempt IN 1..2:
         Analyze guard output → rework implementation (NOT tests)
-        git add -A && git commit -m "experiment: rework — <description>"
+        git add <modified-files> && git commit -m "experiment(<scope>): rework — <description>"
         Re-run verify
         IF metric_improved:
             Re-run guard

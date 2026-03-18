@@ -1,7 +1,7 @@
 ---
 name: autoresearch:security
 description: Autonomous security audit — STRIDE threat model + OWASP Top 10 + red-team with 4 adversarial personas
-argument-hint: "[--diff] [--fix] [--fail-on <severity>] [--iterations N]"
+argument-hint: "[--diff] [--fix] [--fail-on <severity>] [--scope <glob>] [--depth <level>] [--iterations N]"
 ---
 
 EXECUTE IMMEDIATELY — do not deliberate, do not ask clarifying questions before reading the protocol.
@@ -12,8 +12,10 @@ Extract these from $ARGUMENTS — the user may provide extensive context alongsi
 
 - `--diff` — only audit files changed since last audit
 - `--fix` — auto-fix confirmed Critical/High findings
-- `--fail-on <severity>` — exit non-zero for CI/CD gating
-- `Scope:` or `--scope <glob>` — file globs to audit
+- `--fail-on <severity>` — exit non-zero for CI/CD gating (critical/high/medium)
+- `--scope <glob>` or `Scope:` — file globs to audit
+- `--depth <level>` or `Depth:` — quick scan (5), standard (15), deep (30+)
+- `Focus:` — specific area to focus on (e.g., "authentication and authorization")
 - `Iterations:` or `--iterations N` — integer for bounded mode (CRITICAL: run exactly N iterations then stop)
 
 If `Iterations: N` or `--iterations N` is found, set `max_iterations = N`. Track `current_iteration` starting at 0. After iteration N, print final summary and STOP.

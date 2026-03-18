@@ -585,7 +585,7 @@ claude -p "/autoresearch:security --fail-on critical --iterations 10"
 # Exit code 1 if any Critical findings → blocks the pipeline
 ```
 
-### `--fix` — Auto-Remediation Mode (v1.0.3)
+### `--fix` — Auto-Remediation Mode
 
 After completing the audit, switches to standard autoresearch modify→verify loop to fix confirmed findings. Uses the security audit report as its goal.
 
@@ -694,6 +694,8 @@ jobs:
         run: |
           git clone https://github.com/uditgoenka/autoresearch.git /tmp/autoresearch
           cp -r /tmp/autoresearch/skills/autoresearch .claude/skills/autoresearch
+          cp -r /tmp/autoresearch/commands/autoresearch .claude/commands/autoresearch
+          cp /tmp/autoresearch/commands/autoresearch.md .claude/commands/autoresearch.md
 
       - name: Run Security Audit
         env:

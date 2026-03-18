@@ -1,7 +1,7 @@
 ---
 name: autoresearch:predict
 description: Multi-persona swarm prediction — pre-analyze code from multiple expert perspectives using file-based knowledge representation. Zero external dependencies.
-argument-hint: "[goal/focus] [--scope <glob>] [--chain debug|security|fix|ship|scenario] [--depth shallow|standard|deep] [--personas N] [--rounds N] [--adversarial] [--budget <dollars>] [--fail-on <severity>]"
+argument-hint: "[goal/focus] [--scope <glob>] [--chain debug|security|fix|ship|scenario] [--depth shallow|standard|deep] [--personas N] [--rounds N] [--adversarial] [--budget <N>] [--fail-on <severity>]"
 ---
 
 EXECUTE IMMEDIATELY — do not deliberate, do not ask clarifying questions before reading the protocol.
@@ -16,10 +16,10 @@ Extract these from $ARGUMENTS — the user may provide extensive context alongsi
 - `--personas N` — number of personas (3-8)
 - `--rounds N` — debate rounds (1-3)
 - `--adversarial` — use red team personas
-- `--budget <$>` — max cost per session
+- `--budget <N>` — max total findings across all personas (default: 40)
 - `--fail-on <severity>` — CI/CD gate
-- `--dry-run` — show what would happen without executing
-- `Goal:` — text after "Goal:" keyword
+- `--incremental` — reuse existing knowledge files, update only changed files
+- `--goal <text>` or `Goal:` — focus area for analysis
 
 All remaining text not matching flags is the goal/focus description.
 

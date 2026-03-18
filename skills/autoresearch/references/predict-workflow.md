@@ -679,12 +679,12 @@ Reports older than 30 days also receive: `⚠️ Age Warning: This report is {N}
 |------|---------|---------|
 | `--scope <glob>` | Files to include in analysis | `--scope "src/api/**/*.ts"` |
 | `--goal <text>` | Focus area for all personas | `--goal "security and reliability"` |
-| `--depth <level>` | Preset (quick/standard/deep) or custom | `--depth deep` |
+| `--depth <level>` | Preset (shallow/standard/deep) | `--depth deep` |
 | `--personas <N>` | Override persona count (3-8) | `--personas 4` |
-| `--rounds <N>` | Override debate rounds (0-3) | `--rounds 1` |
+| `--rounds <N>` | Override debate rounds (1-3) | `--rounds 1` |
 | `--adversarial` | Use adversarial persona set instead of default | `--adversarial` |
 | `--chain <tools>` | Chain to downstream tool(s). Comma-separated for multi-chain | `--chain debug` or `--chain scenario,debug,fix` |
-| `--budget <dollars>` | Max LLM cost for session (default: $1.00) | `--budget 0.50` |
+| `--budget <findings>` | Max total findings across all personas (default: 40) | `--budget 20` |
 | `--fail-on <severity>` | Exit non-zero if findings at severity exist | `--fail-on critical` |
 | `--incremental` | Re-use existing knowledge files, update only changed | `--incremental` |
 
@@ -734,7 +734,7 @@ Iterations: 2
 
 # Predict → Scenario: swarm findings seed edge case exploration
 /autoresearch:predict --scope src/checkout/**/*.ts --chain scenario
-Depth: quick
+Depth: shallow
 ```
 
 ## What NOT to Do — Anti-Patterns

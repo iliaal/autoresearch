@@ -77,11 +77,11 @@ echo "  Branch:          $BRANCH"
 echo ""
 
 # --- Create release branch ---
-echo "[1/6] Creating release branch: $BRANCH"
+echo "[1/7] Creating release branch: $BRANCH"
 git checkout -b "$BRANCH"
 
 # --- Bump version in plugin.json and marketplace.json ---
-echo "[2/6] Bumping versions: $CURRENT → $VERSION"
+echo "[2/7] Bumping versions: $CURRENT → $VERSION"
 for JSON_FILE in "$PLUGIN_JSON" "$MARKETPLACE_JSON"; do
   if [[ -f "$JSON_FILE" ]]; then
     echo "    Updating $JSON_FILE"

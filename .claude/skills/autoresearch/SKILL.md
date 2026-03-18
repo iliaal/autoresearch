@@ -1,7 +1,7 @@
 ---
 name: autoresearch
 description: Autonomous Goal-directed Iteration. Apply Karpathy's autoresearch principles to ANY task. Loops autonomously — modify, verify, keep/discard, repeat. Supports bounded iteration via Iterations: N inline config.
-version: 1.7.1
+version: 1.7.2
 ---
 
 # Claude Autoresearch — Autonomous Goal-directed Iteration
@@ -366,7 +366,7 @@ After the wizard completes, the user gets a ready-to-paste `/autoresearch` invoc
 
 ## When to Activate
 
-- User invokes `/autoresearch` or `/ug:autoresearch` → run the loop
+- User invokes `/autoresearch` → run the loop
 - User invokes `/autoresearch:plan` → run the planning wizard
 - User invokes `/autoresearch:security` → run the security audit
 - User says "help me set up autoresearch", "plan an autoresearch run" → run the planning wizard

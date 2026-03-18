@@ -1,7 +1,7 @@
 ---
 name: autoresearch:ship
 description: Universal shipping workflow — ship code, content, marketing, sales, research, or anything through structured 8-phase workflow
-argument-hint: "[--dry-run] [--auto] [--force] [--rollback] [--monitor N] [--type <type>] [--checklist-only] [--iterations N]"
+argument-hint: "[--dry-run] [--auto] [--force] [--rollback] [--monitor N] [--type <type>] [--target <path>] [--checklist-only] [--iterations N]"
 ---
 
 EXECUTE IMMEDIATELY — do not deliberate, do not ask clarifying questions before reading the protocol.
@@ -17,6 +17,7 @@ Extract these from $ARGUMENTS — the user may provide extensive context alongsi
 - `--monitor N` — post-ship monitoring for N minutes
 - `--type <type>` — override auto-detection (code-pr, code-release, deployment, content, etc.)
 - `--checklist-only` — only generate checklist
+- `--target <path>` or `Target:` — what to ship (path, PR, artifact)
 - `Iterations:` or `--iterations N` — bounded preparation iterations (CRITICAL: run exactly N prep iterations then ship)
 
 If `Iterations: N` or `--iterations N` is found, set `max_iterations = N` for the preparation loop.
