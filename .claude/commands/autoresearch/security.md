@@ -14,7 +14,7 @@ Extract these from $ARGUMENTS — the user may provide extensive context alongsi
 - `--fix` — auto-fix confirmed Critical/High findings
 - `--fail-on <severity>` — exit non-zero for CI/CD gating (critical/high/medium)
 - `--scope <glob>` or `Scope:` — file globs to audit
-- `--depth <level>` or `Depth:` — quick scan (5), standard (15), deep (30+)
+- `--depth <level>` or `Depth:` — shallow (5 iterations), standard (15), deep (30+)
 - `Focus:` — specific area to focus on (e.g., "authentication and authorization")
 - `Iterations:` or `--iterations N` — integer for bounded mode (CRITICAL: run exactly N iterations then stop)
 

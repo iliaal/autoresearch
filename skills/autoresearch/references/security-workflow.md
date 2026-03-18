@@ -600,11 +600,11 @@ Iterations: 10
 
 1. Run the full security audit (setup + loop + report)
 2. Filter findings: only **Confirmed** severity **Critical** and **High**
-3. Switch to standard autoresearch loop:
-   - **Goal:** Fix all confirmed Critical and High findings
+3. Switch to `/autoresearch:fix` with findings context:
+   - **Target:** Re-run the security checks that found each vulnerability
    - **Scope:** Files referenced in findings (file:line locations)
-   - **Metric:** Count of remaining confirmed findings (lower is better)
-   - **Verify:** Re-run the security checks that found each vulnerability
+   - Pass the filtered findings list as context so fix knows WHAT to fix
+   - Fix picks highest-severity unfixed finding each iteration
 4. For each fix iteration:
    - Pick the highest-severity unfixed finding
    - Apply the mitigation from `recommendations.md`

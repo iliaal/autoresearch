@@ -66,6 +66,12 @@ fi
 
 git pull origin master --quiet
 
+# Check if tag already exists
+if git tag -l "$TAG" | grep -q "$TAG"; then
+  echo "Error: Tag $TAG already exists. Choose a different version."
+  exit 1
+fi
+
 # Read current version
 CURRENT=$(grep -o '"version": "[^"]*"' "$PLUGIN_JSON" | cut -d'"' -f4)
 echo ""

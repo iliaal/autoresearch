@@ -45,7 +45,7 @@ You MUST call `AskUserQuestion` with the selected questions in ONE batched call:
 |---|--------|----------|-------------|---------|
 | 1 | `Scope` | "Which files should I analyze?" | If no `--scope` or `Scope:` provided | Suggested globs from project structure + "Entire codebase" |
 | 2 | `Goal` | "What should the swarm focus on?" | If no explicit goal inline | "Code quality & reliability", "Security vulnerabilities", "Performance bottlenecks", "Architecture review", "All of the above" |
-| 3 | `Depth` | "How deep should I analyze?" | Always | "Quick scan (3 personas, 1 round)", "Standard (5 personas, 2 rounds) — recommended", "Deep investigation (8 personas, 3 rounds)", "Custom" |
+| 3 | `Depth` | "How deep should I analyze?" | Always | "Shallow (3 personas, 1 round)", "Standard (5 personas, 2 rounds) — recommended", "Deep (8 personas, 3 rounds)", "Custom" |
 | 4 | `Chain` | "After analysis, chain to another tool?" | If no `--chain` provided | "Debug (test hypotheses)", "Security (validate vectors)", "Fix (prioritized queue)", "Ship (pre-deploy check)", "Scenario (explore edge cases)", "No chain — report only" |
 
 **IMPORTANT:** Batch ALL selected questions into a SINGLE `AskUserQuestion` call. NEVER ask one at a time — users need full context to make informed decisions together.
@@ -87,7 +87,7 @@ Parse and validate configuration:
   - `shallow` → 3 personas, 1 round
   - `standard` → 5 personas, 2 rounds (default)
   - `deep` → 8 personas, 3 rounds
-- Validate `--chain` target(s). Supports single (`--chain debug`) or comma-separated multi-chain (`--chain scenario,debug,fix`). Each target must be a known tool (debug, security, fix, ship, scenario). Multi-chain executes sequentially — each stage's findings feed into the next via handoff.json
+- Validate `--chain` target(s). Supports single (`--chain debug`) or comma-separated multi-chain (`--chain scenario,debug,fix`). **No spaces after commas** — `--chain debug,fix` not `--chain debug, fix`. Each target must be a known tool (debug, security, fix, ship, scenario). Unknown targets → error. Multi-chain executes sequentially — each stage's findings feed into the next via handoff.json. `--iterations` applies to predict only, not the chain targets
 - If `--adversarial` flag present, swap default persona set for adversarial set
 
 **Output:** `✓ Phase 1: Setup — [N] files in scope, [M] personas, [K] rounds planned`

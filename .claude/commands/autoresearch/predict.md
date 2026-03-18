@@ -1,7 +1,7 @@
 ---
 name: autoresearch:predict
 description: Multi-persona swarm prediction — pre-analyze code from multiple expert perspectives using file-based knowledge representation. Zero external dependencies.
-argument-hint: "[goal/focus] [--scope <glob>] [--chain debug|security|fix|ship|scenario] [--depth shallow|standard|deep] [--personas N] [--rounds N] [--adversarial] [--budget <N>] [--fail-on <severity>]"
+argument-hint: "[goal/focus] [--scope <glob>] [--chain debug|security|fix|ship|scenario] [--depth shallow|standard|deep] [--personas N] [--rounds N] [--adversarial] [--budget <N>] [--fail-on <severity>] [--iterations N]"
 ---
 
 EXECUTE IMMEDIATELY — do not deliberate, do not ask clarifying questions before reading the protocol.
@@ -20,6 +20,9 @@ Extract these from $ARGUMENTS — the user may provide extensive context alongsi
 - `--fail-on <severity>` — CI/CD gate
 - `--incremental` — reuse existing knowledge files, update only changed files
 - `--goal <text>` or `Goal:` — focus area for analysis
+- `Iterations:` or `--iterations N` — integer for bounded mode (CRITICAL: run exactly N iterations then stop)
+
+If `Iterations: N` or `--iterations N` is found, set `max_iterations = N`. Track `current_iteration` starting at 0. After iteration N, print final summary and STOP.
 
 All remaining text not matching flags is the goal/focus description.
 
@@ -28,6 +31,7 @@ All remaining text not matching flags is the goal/focus description.
 1. Read the predict workflow: `.claude/skills/autoresearch/references/predict-workflow.md`
 2. If scope or goal is missing — use `AskUserQuestion` with batched questions per predict-workflow.md
 3. Execute the 8-phase predict workflow
-4. If `--chain` is set, hand off to each chained command sequentially
+4. If bounded: after each iteration, check `current_iteration < max_iterations`. If not, STOP and print summary.
+5. If `--chain` is set, hand off to each chained command sequentially
 
 Stream all output live — never run in background.

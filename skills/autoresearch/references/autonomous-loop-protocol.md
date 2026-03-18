@@ -23,7 +23,7 @@ git rev-parse --git-dir 2>/dev/null || echo "FAIL: not a git repo"
 # 2. Check for dirty working tree
 git status --porcelain
 # → If dirty: warn user and ask to stash or commit first
-#   NEVER proceed with uncommitted user changes — git add -A will stage them
+#   NEVER proceed with uncommitted user changes — explicit git add will stage them
 
 # 3. Check for stale lock files
 ls .git/index.lock 2>/dev/null && echo "WARN: stale lock"
