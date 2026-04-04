@@ -11,8 +11,7 @@ Based on [Karpathy's autoresearch](https://github.com/karpathy/autoresearch) —
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 [![Based on](https://img.shields.io/badge/Based_on-Karpathy's_Autoresearch-orange)](https://github.com/karpathy/autoresearch)
-[![Follow @iuditg](https://img.shields.io/badge/Follow-@iuditg-000000?style=flat&logo=x&logoColor=white)](https://x.com/intent/follow?screen_name=iuditg)
-[![Support](https://img.shields.io/badge/Support-PayPal-00457C?style=flat&logo=paypal&logoColor=white)](https://paypal.me/uditgoenka)
+[![Follow @iliaa](https://img.shields.io/badge/Follow-@iliaa-000000?style=flat&logo=x&logoColor=white)](https://x.com/intent/follow?screen_name=iliaa)
 
 <br>
 
@@ -72,17 +71,19 @@ LOOP (FOREVER or N times):
   8. Repeat. Never stop until you interrupt (or N iterations complete).
 ```
 
-Every improvement stacks. Every failure auto-reverts. Progress is logged in TSV format.
+Every improvement stacks. Every failure auto-reverts. Progress is logged in TSV format. A Stop hook mechanically prevents session exit during active loops, so the iteration never silently dies.
 
 ### The Setup Phase
 
 Before looping, Claude performs a one-time setup:
 
-1. **Read context** — reads all in-scope files
-2. **Define goal** — extracts or asks for a mechanical metric
-3. **Define scope** — which files can be modified vs read-only
-4. **Establish baseline** — runs verification on current state (iteration #0)
-5. **Confirm and go** — shows setup, then begins the loop
+1. **Validate config** — dry-runs verify/guard commands, checks git state, validates scope globs resolve to files
+2. **Read context** — reads all in-scope files
+3. **Define goal** — extracts or asks for a mechanical metric
+4. **Define scope** — which files can be modified vs read-only
+5. **Establish baseline** — runs verification on current state (iteration #0)
+6. **Activate loop state** — creates state file and activates the stop hook
+7. **Confirm and go** — shows setup, then begins the loop
 
 ### 8 Critical Rules
 
@@ -96,6 +97,8 @@ Before looping, Claude performs a one-time setup:
 | 6 | **Simplicity wins** — equal results + less code = KEEP |
 | 7 | **Git is memory** — experiments committed with `experiment:` prefix, `git revert` preserves failed experiments in history, agent MUST read `git log` + `git diff` before each iteration |
 | 8 | **When stuck, think harder** — re-read, combine near-misses, try radical changes |
+| 9 | **Research after failure** — mandatory investigation before the next attempt after a discard or crash |
+| 10 | **Independent evaluation** — Evaluator subagent reviews changes to combat self-evaluation bias |
 
 ---
 
@@ -114,7 +117,10 @@ Before looping, Claude performs a one-time setup:
 | `/autoresearch:predict` | Multi-persona prediction | Pre-analyze code from 5 expert perspectives before acting |
 | `/autoresearch:learn` | Autonomous documentation engine — scout codebase, generate/update docs, validate, fix loop |
 | `/autoresearch:reason` | Adversarial refinement — blind judge panel converges subjective content through isolated multi-agent debate |
+| `/autoresearch:cancel` | Stop the active autoresearch loop |
 | `Guard: <command>` | Optional safety net — must pass for changes to be kept |
+| `Evaluator: on/off` | Independent subagent reviews each change after verification (default: on) |
+| `Completion-Promise:` | Semantic exit condition — loop stops when the promise is genuinely true |
 
 **All commands use `AskUserQuestion` for interactive setup when invoked without arguments.** Just type the command — Claude will ask you what you need step by step with smart defaults based on your codebase. Power users can skip the wizard by providing flags inline.
 
@@ -142,6 +148,9 @@ Before looping, Claude performs a one-time setup:
 | Debate an architecture decision | `/autoresearch:reason --domain software` |
 | Refine a pitch or proposal adversarially | `/autoresearch:reason --domain business` |
 | Converge on best design then validate | `/autoresearch:reason --chain predict` |
+| Stop a running loop | `/autoresearch:cancel` |
+| Loop until a condition is met, not N iterations | Add `Completion-Promise: All tests passing above 90%` |
+| Skip independent evaluation for speed | Add `Evaluator: off` |
 
 ---
 
@@ -479,9 +488,17 @@ autoresearch/
 ├── claude-plugin/                                 ← Distribution package (what users install)
 │   ├── .claude-plugin/
 │   │   └── plugin.json                            ← Plugin metadata + version
+│   ├── hooks/
+│   │   ├── hooks.json                             ← Stop hook registration
+│   │   ├── stop-hook.sh                           ← Mechanical loop enforcement
+│   │   └── flow-check.sh                          ← Protocol compliance validation
+│   ├── scripts/
+│   │   ├── setup-loop.sh                          ← State file creation + config
+│   │   └── validate-config.sh                     ← Pre-loop config validation
 │   ├── commands/
 │   │   ├── autoresearch.md                        ← Main /autoresearch command
 │   │   └── autoresearch/
+│   │       ├── cancel.md                          ← /autoresearch:cancel
 │   │       ├── ship.md                            ← /autoresearch:ship registration
 │   │       ├── plan.md                            ← /autoresearch:plan registration
 │   │       ├── security.md                        ← /autoresearch:security registration
@@ -520,7 +537,7 @@ A: Run `/autoresearch:plan` — it analyzes your codebase, suggests metrics, and
 A: Yes. Any language, framework, or domain. Install via `/plugin marketplace add uditgoenka/autoresearch` or manually copy from the `claude-plugin/` directory.
 
 **Q: How do I stop the loop?**
-A: `Ctrl+C` or add `Iterations: N` to your inline config to run exactly N iterations. Claude commits before verifying, so your last successful state is always in git.
+A: `/autoresearch:cancel`, `Ctrl+C`, or add `Iterations: N` for a bounded run. You can also set `Completion-Promise: <text>` for a semantic exit condition. Claude commits before verifying, so your last successful state is always in git.
 
 **Q: Can I use this for non-code tasks?**
 A: Absolutely. Sales emails, marketing copy, HR policies, runbooks — anything with a measurable metric. See [Examples by Domain](guide/examples-by-domain.md).
@@ -544,18 +561,6 @@ Areas of interest: new domain examples, verification script templates, CI/CD int
 
 ---
 
-## Star History
-
-<a href="https://www.star-history.com/?repos=uditgoenka%2Fautoresearch&type=timeline&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=uditgoenka/autoresearch&type=timeline&theme=dark&legend=bottom-right&v=20260319" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=uditgoenka/autoresearch&type=timeline&legend=bottom-right&v=20260319" />
-   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=uditgoenka/autoresearch&type=timeline&legend=bottom-right&v=20260319" />
- </picture>
-</a>
-
----
-
 ## License
 
 MIT — see [LICENSE](LICENSE).
@@ -566,27 +571,4 @@ MIT — see [LICENSE](LICENSE).
 
 - **[Andrej Karpathy](https://github.com/karpathy)** — for [autoresearch](https://github.com/karpathy/autoresearch)
 - **[Anthropic](https://anthropic.com)** — for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and the skills system
-
----
-
-<div align="center">
-
-## About the Author
-
-<a href="https://udit.co">
-  <img src="https://avatars.githubusercontent.com/uditgoenka" width="80" style="border-radius: 50%;" alt="Udit Goenka" />
-</a>
-
-**[Udit Goenka](https://udit.co)** — AI Product Expert, Founder & Angel Investor
-
-Self-taught builder who went from a slow internet connection in India to founding multiple companies and helping 700+ startups generate over ~$25m in revenue.
-
-**Building:** [TinyCheque](https://tinycheque.com) (India's first agentic AI venture studio) · [Firstsales.io](https://firstsales.io) (sales automation)
-
-**Investing:** 38 startups backed, 6 exits. Focused on early-stage AI and SaaS.
-
-**Connect:** [udit.co](https://udit.co) · [@iuditg](https://x.com/iuditg) · [@uditgoenka](https://github.com/uditgoenka) · [Newsletter](https://udit.co/blog)
-
-> *"Autonomy scales when you constrain scope, clarify success, mechanize verification, and let agents optimize tactics while humans optimize strategy."*
-
-</div>
+- **[Udit Goenka](https://github.com/uditgoenka)** — original [autoresearch plugin](https://github.com/uditgoenka/autoresearch)
