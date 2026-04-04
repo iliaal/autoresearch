@@ -41,6 +41,16 @@ ls .pre-commit-config.yaml 2>/dev/null && echo "INFO: pre-commit framework detec
 #   treat as crash and log "hook blocked commit" — do NOT use --no-verify
 ```
 
+**If metric-valued guard is configured** (has `Guard-Direction` and `Guard-Threshold`):
+
+```bash
+# 6. Extract guard-metric baseline
+GUARD_BASELINE=$(<guard command>)
+# Validate it's a valid number (same rules as verify metric)
+# Record alongside the primary metric baseline in iteration 0
+# Track guard_best_metric = GUARD_BASELINE (updated when guard-metric improves)
+```
+
 **If any FAIL:** Stop and inform user. Do not enter the loop with broken preconditions.
 **If any WARN:** Log the warning, proceed with caution, inform user.
 
@@ -581,19 +591,50 @@ IF metric_worse AND abs(delta) < noise_floor:
 
 If a **guard** command was defined during setup, run it after verification.
 
-The guard is a command that must ALWAYS pass — it protects existing functionality while the main metric is being optimized. Common guards: `npm test`, `npm run typecheck`, `pytest`, `cargo test`.
+The guard protects existing functionality while the main metric is being optimized. It operates in one of two modes:
+
+**Pass/fail mode (default):** Guard is a command that must exit 0. Common examples: `npm test`, `npm run typecheck`, `pytest`, `cargo test`.
+
+**Metric-valued mode:** Guard extracts a number (like the verify command) and checks it against a regression threshold. Use this when you need tolerance, not a binary tripwire. Example: "bundle size can grow up to 5% from baseline, but no more."
+
+```
+# Pass/fail guard (default):
+Guard: npm test
+
+# Metric-valued guard:
+Guard: npx esbuild src/index.ts --bundle --minify | wc -c
+Guard-Direction: lower is better
+Guard-Threshold: +5%
+```
 
 **Key distinction:**
 - **Verify** answers: "Did the metric improve?" (the goal)
 - **Guard** answers: "Did anything else break?" (the safety net)
 
-**Guard rules:**
+**Guard rules (both modes):**
 - Only run if a guard was defined (it's optional)
-- Run AFTER verify — no point checking guard if the metric didn't improve
-- Guard is pass/fail only (exit code 0 = pass). No metric extraction needed
+- Run AFTER verify, no point checking guard if the metric didn't improve
 - If guard fails, revert the optimization and try to rework it (max 2 attempts)
-- NEVER modify guard/test files — always adapt the implementation instead
+- NEVER modify guard/test files, always adapt the implementation instead
 - Log guard failures distinctly so the agent can learn what kinds of changes cause regressions
+
+**Pass/fail mode rules:**
+- Exit code 0 = pass. Non-zero = fail.
+
+**Metric-valued mode rules:**
+- Extract the guard-metric using the same numeric validation as the primary metric (must match `^-?[0-9]+\.?[0-9]*$`)
+- If guard-metric extraction fails, treat as guard failure (not metric-error)
+- Compare against baseline using the threshold:
+  ```
+  IF Guard-Direction is "lower is better":
+      guard_passed = (guard_metric <= guard_baseline * (1 + threshold/100))
+      # Example: baseline 50000 bytes, threshold +5% → pass if <= 52500
+  IF Guard-Direction is "higher is better":
+      guard_passed = (guard_metric >= guard_baseline * (1 - threshold/100))
+      # Example: baseline 95% coverage, threshold +5% → pass if >= 90.25%
+  ```
+- Track `guard_best_metric`: update whenever the guard-metric improves (respecting Guard-Direction), regardless of whether the change was kept or discarded. Report in the results log for visibility into guard-metric drift.
+- `Guard-Threshold: 0%` means strict no-regression: the guard-metric must not worsen at all from baseline.
 
 **Guard failure recovery (max 2 rework attempts):**
 

@@ -580,6 +580,29 @@ Verify: npx esbuild src/index.ts --bundle --minify | wc -c
 Plateau-Patience: 20
 ```
 
+### Metric-Valued Guards
+
+By default, guards are pass/fail (exit code 0 = pass). For guards that measure a number (bundle size, response time, coverage), you can set a regression threshold instead:
+
+```
+/autoresearch
+Goal: Increase test coverage to 95%
+Verify: npx jest --coverage 2>&1 | grep 'All files' | awk '{print $4}'
+Guard: npx esbuild src/index.ts --bundle --minify | wc -c
+Guard-Direction: lower is better
+Guard-Threshold: 5%
+```
+
+This means: "optimize coverage, but reject any change that grows bundle size more than 5% from baseline." The primary metric still drives keep/discard. The guard-metric is tracked in the results log for visibility into drift over time.
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `Guard` | Yes | Command that outputs a number (metric-valued) or exits 0/1 (pass/fail) |
+| `Guard-Direction` | Only for metric-valued | `higher is better` or `lower is better` |
+| `Guard-Threshold` | Only for metric-valued | Max allowed regression as % of baseline (e.g., `5%`, `0%` for strict) |
+
+Without `Guard-Direction` and `Guard-Threshold`, the guard operates in pass/fail mode.
+
 ## Setup Phase (Do Once)
 
 **If the user provides Goal, Scope, Metric, and Verify inline** → extract them and proceed to step 5.
@@ -607,6 +630,7 @@ Use a SINGLE `AskUserQuestion` call with these 4 questions:
 |---|--------|----------|---------|
 | 5 | `Verify` | "What command produces the metric? (I'll dry-run it to confirm)" | Suggested commands from detected tooling |
 | 6 | `Guard` | "Any command that must ALWAYS pass? (prevents regressions)" | "npm test", "tsc --noEmit", "npm run build", "Skip — no guard" |
+| 6b | `Guard mode` | "Pass/fail or metric-valued with threshold?" | "Pass/fail (default)", "Metric-valued with threshold" |
 | 7 | `Launch` | "Ready to go?" | "Launch (unlimited)", "Launch with iteration limit", "Edit config", "Cancel" |
 
 **After Batch 2:** Dry-run the verify command. If it fails, ask user to fix or choose a different command. If it passes, proceed with launch choice.

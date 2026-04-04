@@ -158,6 +158,65 @@ AskUserQuestion:
 
 **Guard validation:** If guard is set, run it once to confirm it passes on current codebase. If it fails, help user fix it before proceeding.
 
+### Phase 4.6: Guard Mode (if guard was set)
+
+If the user chose a guard, ask whether it's pass/fail or metric-valued:
+
+```
+AskUserQuestion:
+  question: "Should the guard just pass/fail, or do you want to track a number with a regression threshold?"
+  header: "Guard mode"
+  options:
+    - label: "Pass/fail (default)"
+      description: "Guard command must exit 0. Use for test suites, type checks, builds."
+    - label: "Metric-valued with threshold"
+      description: "Guard extracts a number. I'll ask for direction and tolerance."
+```
+
+**If metric-valued:** Collect two additional params:
+
+```
+AskUserQuestion:
+  question: "For the guard metric, is higher or lower better?"
+  header: "Guard direction"
+  options:
+    - label: "Lower is better"
+      description: "Bundle size (bytes), response time (ms), error count"
+    - label: "Higher is better"
+      description: "Coverage %, throughput, score"
+```
+
+```
+AskUserQuestion:
+  question: "How much can the guard metric regress before you want changes rejected? (as % of baseline)"
+  header: "Guard threshold"
+  options:
+    - label: "0% — strict, no regression allowed"
+      description: "Guard metric must never worsen from baseline"
+    - label: "5% — moderate tolerance (Recommended)"
+      description: "Small regressions OK if the primary metric improves"
+    - label: "10% — relaxed tolerance"
+      description: "Larger regressions tolerated"
+    - label: "Custom"
+      description: "I'll specify a percentage"
+```
+
+**Metric-valued guard validation (MANDATORY):**
+1. Run the guard command on current codebase
+2. Validate the output is a valid number (same rules as verify: must match `^-?[0-9]+\.?[0-9]*$`)
+3. Record the guard-metric baseline
+4. If extraction fails, show the error and suggest switching to pass/fail mode
+
+```
+Guard dry run:
+  Command: {guard_command}
+  Output: {raw output}
+  Extracted guard-metric: {number}
+  Guard baseline: {number}
+  Threshold: {threshold}%
+  Guard will fail if: {metric} {exceeds/drops below} {baseline * (1 +/- threshold/100)}
+```
+
 ### Phase 5: Define Direction
 
 ```
