@@ -146,6 +146,7 @@ if [[ -d ".claude/skills/autoresearch" ]]; then
   cp .claude/skills/autoresearch/references/*.md claude-plugin/skills/autoresearch/references/
   echo "    Synced claude-plugin/skills/autoresearch/"
 fi
+echo "    hooks/ and scripts/ live directly in claude-plugin/ (no .claude/ source)"
 
 # --- Doc review prompt ---
 echo ""

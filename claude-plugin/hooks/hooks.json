@@ -1,0 +1,15 @@
+{
+  "description": "Autoresearch loop stop hook — prevents session exit during active loop",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

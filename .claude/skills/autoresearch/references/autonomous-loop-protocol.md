@@ -6,10 +6,20 @@ Detailed protocol for the autoresearch iteration loop. SKILL.md has the summary;
 
 Autoresearch supports two loop modes:
 
-- **Unbounded (default):** Loop forever until manually interrupted (`Ctrl+C`)
+- **Unbounded (default):** Loop until completion promise is met, plateau detection fires, or manually interrupted (`Ctrl+C`)
 - **Bounded:** Loop exactly N times when `Iterations: N` is set in the inline config (or `--iterations N` flag for CLI/CI)
 
-When bounded, track `current_iteration` against `max_iterations`. After the final iteration, print a summary and stop.
+**Iteration counting:** The stop hook is the single source of truth for iteration count. Read the current iteration from the state file (`.claude/autoresearch-loop.local.md`). Do NOT maintain a separate counter. The hook atomically increments the counter between iterations.
+
+**Loop enforcement:** A Stop hook mechanically prevents session exit during active loops. When you finish an iteration and the model tries to stop, the hook re-injects the continuation prompt. This means you do not need to explicitly "keep going" -- the hook handles loop continuation. Focus on executing each iteration correctly.
+
+**State file updates:** During each iteration, update these flags in the state file frontmatter (`.claude/autoresearch-loop.local.md`) to pass flow-check validation:
+- After running verify: set `verified: true`
+- After checking guard: set `guard_checked: true`
+- After deciding outcome: set `previous_outcome: <keep|discard|crash|no-op|...>`
+- After performing research/investigation: set `research_done: true`
+
+Use `sed` to update individual fields: `sed -i 's/^verified: .*/verified: true/' .claude/autoresearch-loop.local.md`
 
 ## Phase 0: Precondition Checks (before loop starts)
 
@@ -50,6 +60,13 @@ GUARD_BASELINE=$(<guard command>)
 # Record alongside the primary metric baseline in iteration 0
 ```
 
+**Config validation:** Before entering the loop, run the config validation script if available:
+```bash
+bash "${CLAUDE_PLUGIN_ROOT:-claude-plugin}/scripts/validate-config.sh" \
+  --verify "<verify>" --direction "<direction>" ${guard:+--guard "<guard>"} ${scope:+--scope "<scope>"}
+```
+This dry-runs the verify and guard commands, validates direction, and checks scope globs. If validation fails, stop and show the errors to the user.
+
 **If any FAIL:** Stop and inform user. Do not enter the loop with broken preconditions.
 **If any WARN:** Log the warning, proceed with caution, inform user.
 
@@ -63,8 +80,10 @@ Before each iteration, build situational awareness. **You MUST complete ALL 6 st
 3. MUST run: git log --oneline -20 to see recent changes
 4. MUST run: git diff HEAD~1 (if last iteration was "keep") to review what worked
 5. Identify: what worked, what failed, what's untried — based on BOTH results log AND git history
-6. If bounded: check current_iteration vs max_iterations
+6. Read iteration number from state file (.claude/autoresearch-loop.local.md)
 ```
+
+**Research-after-failure (MANDATORY):** If the previous iteration's outcome was `discard` or `crash`, you MUST perform deep investigation before making the next change. Read the results log for the failure reason, re-read the relevant scope files, analyze the git diff of the reverted commit, and understand WHY it failed. Only then proceed to Phase 2. Update `research_done: true` in the state file after completing this investigation. The flow-check enforces this -- skipping research after failure will produce a warning.
 
 **Why read git history every time?** Git IS the memory. After rollbacks, state may differ from what you expect. The git log shows which experiments were kept vs reverted. The git diff of kept changes reveals WHAT specifically improved the metric — use this to inform the next iteration. Never assume — always verify.
 
@@ -743,17 +762,9 @@ Go to Phase 1. **Do not ask "should I keep going?" — keep iterating unless a h
 
 ### Bounded Mode (with Iterations: N)
 
-```
-IF current_iteration < max_iterations:
-    Go to Phase 1
-ELIF goal_achieved:
-    Print: "Goal achieved at iteration {N}! Final metric: {value}"
-    Print final summary
-    STOP
-ELSE:
-    Print final summary
-    STOP
-```
+The stop hook enforces the iteration limit. When `max_iterations` is reached, the hook allows session exit and removes the state file. The agent does not need to track or check the iteration count. If the goal is achieved before the limit, output the completion promise (if configured) to exit early.
+
+If the stop hook is not available (plugin not installed via marketplace), fall back to reading the iteration count from the state file and stopping when it matches max_iterations.
 
 **Final summary format:**
 ```
@@ -881,10 +892,85 @@ IF working tree is clean AND last commit has a results log entry:
     Resume loop from Phase 1
 ```
 
+**Phase 4 safety:** If `git commit` itself fails for any reason (disk full, hook timeout, permissions), clean up staged changes before moving on:
+
+```bash
+git reset HEAD -- .   # unstage everything
+git checkout -- <in-scope files>   # restore files to last committed state
+# Log as status=crash, continue to next iteration
+```
+
+## Agent Dispatch Model
+
+Autoresearch supports three agent dispatch modes, configured via `Evaluator:` and `Agents:` in the inline config.
+
+### Mode 1: Single-Agent (`Evaluator: off`)
+
+The main agent executes all phases. This is the original behavior and remains fully supported for backward compatibility. Use when token efficiency matters more than evaluation quality.
+
+### Mode 2: Evaluator (default, `Evaluator: on`)
+
+The main agent executes Phases 1-5 (Review through Verify) as normal. After Phase 5, it dispatches an independent Evaluator subagent via the Agent tool.
+
+**Evaluator subagent brief:**
+```
+Review this change independently.
+
+Diff: <git diff HEAD~1>
+Metric result: <metric value> (<delta> from baseline)
+Goal: <goal>
+Direction: <direction>
+
+Assess:
+1. Does this change genuinely improve the goal, or is the metric improvement incidental?
+2. Is the improvement real or gamed (hardcoded values, removed test cases, etc.)?
+3. Any regressions the metric doesn't capture?
+
+Return ONE of: approve, flag, reject — with a one-sentence reason.
+```
+
+The Evaluator runs in read-only mode (no writes). Its verdict is advisory: the main agent considers both metric result AND evaluator verdict in Phase 6, but the metric is the primary decision driver. Log the verdict in the results TSV `evaluator` column.
+
+When to override the Evaluator:
+- Metric improved AND evaluator approves: keep (standard case)
+- Metric improved BUT evaluator flags: keep with caution, log the flag
+- Metric improved BUT evaluator rejects: consider the reasoning, but if the metric is mechanical and improved, the main agent may still keep
+
+### Mode 3: Full Separation (`Agents: full`)
+
+The main agent becomes a Coordinator that never writes code directly. It dispatches subagents for each role:
+
+- **Research subagent** (Phase 1-2): Dispatched after failures or when exploring new directions. Investigates scope files, git history, results patterns. Returns analysis and suggested approach.
+- **Dev subagent** (Phase 3-4): Receives a specific brief ("Make this one change: {description}. Scope: {scope}. Commit with prefix experiment({scope}):"). Makes the change and commits.
+- **Evaluator subagent** (Phase 5-6): Same as Mode 2 above.
+
+The Coordinator:
+1. Reads git log, results log, state file (Phase 1)
+2. Decides strategy, optionally dispatches Research subagent (Phase 2)
+3. Dispatches Dev subagent with specific brief (Phase 3-4)
+4. Runs verify command directly (Phase 5 -- mechanical, no judgment needed)
+5. Dispatches Evaluator subagent (Phase 5.5)
+6. Makes keep/discard decision (Phase 6)
+7. Logs results, updates state file (Phase 7-8)
+
+Full mode uses more tokens per iteration but provides the strongest separation of concerns. Use for high-stakes optimization where self-evaluation bias is a concern.
+
+## Completion Promise
+
+A semantic exit condition. When the completion promise text is genuinely true, output it in `<promise>` tags:
+
+```
+<promise>All tests passing above 90%</promise>
+```
+
+The stop hook extracts this tag from the last assistant output and matches it against the configured `Completion-Promise` value. If they match, the loop exits. If the promise is not yet true, do not output the tag.
+
+Do not output a false promise to escape the loop. The loop is designed to continue until the condition is genuinely met.
 ## Communication
 
-- **DO NOT** ask "should I keep going?" — in unbounded mode, keep iterating unless a halt condition fires (plateau detection, two consecutive metric-errors). In bounded mode, continue until N is reached.
-- **DO NOT** summarize after each iteration — just log and continue
+- **DO NOT** ask "should I keep going?" -- the stop hook handles loop continuation mechanically. In unbounded mode, keep iterating unless a halt condition fires (plateau detection, two consecutive metric-errors). In bounded mode, continue until N is reached.
+- **DO NOT** summarize after each iteration -- just log and continue
 - **DO** print a brief one-line status every ~5 iterations (e.g., "Iteration 25: metric at 0.95, 8 keeps / 17 discards")
 - **DO** alert if you discover something surprising or game-changing
 - **DO** print a final summary when bounded loop completes
+- **DO** update state file flags after each phase (verified, guard_checked, previous_outcome, research_done)

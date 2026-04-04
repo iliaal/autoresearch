@@ -9,7 +9,7 @@ Autoresearch creates the log automatically at Phase 0 (baseline). The agent runs
 ```bash
 # 1. Create log file with metric direction and header
 echo "# metric_direction: higher_is_better" > autoresearch-results.tsv
-echo -e "iteration\tcommit\tmetric\tdelta\tguard\tguard-metric\tstatus\tdescription" >> autoresearch-results.tsv
+echo -e "iteration\tcommit\tmetric\tdelta\tguard\tguard-metric\tevaluator\tstatus\tdescription" >> autoresearch-results.tsv
 
 # 2. Add to .gitignore (log is local, not committed)
 echo "autoresearch-results.tsv" >> .gitignore
@@ -19,7 +19,7 @@ BASELINE=$(npx jest --coverage 2>&1 | grep 'All files' | awk '{print $4}')
 
 # 4. Record baseline as iteration 0
 COMMIT=$(git rev-parse --short HEAD)
-echo -e "0\t${COMMIT}\t${BASELINE}\t0.0\tpass\tbaseline\tinitial state — coverage ${BASELINE}%" >> autoresearch-results.tsv
+echo -e "0\t${COMMIT}\t${BASELINE}\t0.0\tpass\t-\tbaseline\tinitial state — coverage ${BASELINE}%" >> autoresearch-results.tsv
 ```
 
 ## Logging Function
@@ -29,18 +29,19 @@ Called at Phase 7 of every iteration after the keep/discard/crash decision:
 ```bash
 # Function: log_iteration
 log_iteration() {
-  local iteration=$1 commit=$2 metric=$3 delta=$4 guard=$5 guard_metric=$6 status=$7 description=$8
-  echo -e "${iteration}\t${commit}\t${metric}\t${delta}\t${guard}\t${guard_metric}\t${status}\t${description}" \
+  local iteration=$1 commit=$2 metric=$3 delta=$4 guard=$5 guard_metric=$6 evaluator=$7 status=$8 description=$9
+  echo -e "${iteration}\t${commit}\t${metric}\t${delta}\t${guard}\t${guard_metric}\t${evaluator}\t${status}\t${description}" \
     >> autoresearch-results.tsv
 }
 
 # Usage examples:
-log_iteration 1 "b2c3d4e" "87.1" "+1.9" "pass" "-" "keep" "add tests for auth middleware"
+log_iteration 1 "b2c3d4e" "87.1" "+1.9" "pass" "-" "approve" "keep" "add tests for auth middleware"
 log_iteration 2 "-" "86.5" "-0.6" "-" "-" "discard" "refactor test helpers (broke 2 tests)"
 log_iteration 3 "-" "0.0" "0.0" "-" "-" "crash" "add integration tests (DB connection failed)"
 log_iteration 4 "-" "-" "-" "-" "-" "no-op" "attempted to modify read-only config"
 log_iteration 5 "-" "-" "-" "-" "-" "hook-blocked" "pre-commit lint rejected formatting"
 log_iteration 6 "-" "-" "-" "-" "-" "metric-error" "verify output was 'PASS' — not a number"
+log_iteration 7 "c3d4e5f" "88.3" "+1.2" "pass" "-" "flag" "keep" "inline utility functions (evaluator flagged complexity)"
 ```
 
 ## Reading & Using the Log
@@ -112,6 +113,7 @@ iteration	commit	metric	delta	guard	guard-metric	status	description
 | delta | float | Change from previous best (negative = improved for "lower is better") |
 | guard | enum | `pass`, `fail`, or `-` (no guard configured) |
 | guard-metric | float or `-` | Measured guard-metric value (metric-valued guards only). `-` for pass/fail guards or no guard. |
+| evaluator | enum | `approve`, `flag`, `reject`, or `-` (no evaluator configured) |
 | status | enum | `baseline`, `keep`, `keep (reworked)`, `discard`, `crash`, `no-op`, `hook-blocked`, `metric-error` |
 | description | string | One-sentence description of what was tried |
 

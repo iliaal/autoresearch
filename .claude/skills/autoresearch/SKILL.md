@@ -10,6 +10,8 @@ Inspired by [Karpathy's autoresearch](https://github.com/karpathy/autoresearch).
 
 **Core idea:** You are an autonomous agent. Modify → Verify → Keep/Discard → Repeat.
 
+**Loop enforcement:** A Stop hook mechanically prevents session exit during active loops. The hook re-injects the continuation prompt each iteration, tracks iteration count as the single source of truth, and validates protocol compliance via flow-check. Cancel with `/autoresearch:cancel`.
+
 ## MANDATORY: Interactive Setup Gate
 
 **CRITICAL — READ THIS FIRST BEFORE ANY ACTION:**
@@ -23,6 +25,7 @@ For ALL commands (`/autoresearch`, `/autoresearch:plan`, `/autoresearch:debug`, 
 | Command | Required Context | If Missing → Ask |
 |---------|-----------------|-----------------|
 | `/autoresearch` | Goal, Scope, Metric, Direction, Verify | Batch 1 (4 questions) + Batch 2 (3 questions) from Setup Phase below |
+| `/autoresearch:cancel` | (none) | N/A — reads state file directly |
 | `/autoresearch:plan` | Goal | Ask via `AskUserQuestion` per `references/plan-workflow.md` |
 | `/autoresearch:debug` | Issue/Symptom, Scope | 4 batched questions per `references/debug-workflow.md` |
 | `/autoresearch:fix` | Target, Scope | 4 batched questions per `references/fix-workflow.md` |
@@ -49,6 +52,7 @@ For ALL commands (`/autoresearch`, `/autoresearch:plan`, `/autoresearch:debug`, 
 | `/autoresearch:predict` | Multi-persona swarm prediction: pre-analyze code from multiple expert perspectives before acting |
 | `/autoresearch:learn` | Autonomous codebase documentation engine: scout, learn, generate/update docs with validation-fix loop |
 | `/autoresearch:reason` | Adversarial refinement for subjective domains: isolated multi-agent generate→critique→synthesize→blind judge loop until convergence |
+| `/autoresearch:cancel` | Stop the active autoresearch loop (removes state file, allows session exit) |
 
 ### /autoresearch:security — Autonomous Security Audit
 
@@ -536,6 +540,7 @@ After the wizard completes, the user gets a ready-to-paste `/autoresearch` invoc
 - User says "predict", "multi-perspective", "swarm analysis", "what do multiple experts think", "analyze from different angles" → run the predict workflow
 - User invokes `/autoresearch:reason` → run the reason loop
 - User says "reason through this", "adversarial refinement", "debate and converge", "iterative argument", "blind judging", "multi-agent critique" → run the reason loop
+- User invokes `/autoresearch:cancel` → cancel the active loop
 - User says "work autonomously", "iterate until done", "keep improving", "run overnight" → run the loop
 - Any task requiring repeated iteration cycles with measurable outcomes → run the loop
 
@@ -602,6 +607,39 @@ This means: "optimize coverage, but reject any change that grows bundle size mor
 | `Guard-Threshold` | Only for metric-valued | Max allowed regression as % of baseline (e.g., `5%`, `0%` for strict) |
 
 Without `Guard-Direction` and `Guard-Threshold`, the guard operates in pass/fail mode.
+
+### Completion Promise
+
+A semantic exit condition for the loop. When the agent believes the promise is genuinely true, it outputs `<promise>EXACT TEXT</promise>` and the stop hook allows session exit.
+
+```
+/autoresearch
+Goal: Make all API endpoints return within 200ms
+Verify: npm run bench:api | tail -1
+Completion-Promise: All endpoints under 200ms
+```
+
+The promise must be literally true when output. The hook matches the exact text. Do not output a false promise to escape the loop.
+
+### Evaluator and Agent Dispatch
+
+By default, an independent Evaluator subagent reviews each change after verification. This combats self-evaluation bias where the implementing agent overvalues its own changes.
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `Evaluator` | `on` | Dispatch independent Evaluator subagent after verify (`on`/`off`) |
+| `Agents` | `default` | Agent dispatch model: `default` (main agent + Evaluator) or `full` (Coordinator/Dev/Evaluator/Research) |
+
+When `Evaluator: on` (default), the main agent implements changes and runs verify, then dispatches an Evaluator subagent that independently assesses whether the change genuinely improves the goal. The Evaluator's verdict (approve/flag/reject) is advisory and logged in the results TSV.
+
+When `Agents: full`, the main agent becomes a Coordinator that never writes code directly. It dispatches Research subagent (for investigation), Dev subagent (for implementation), and Evaluator subagent (for review). This provides the strongest separation of concerns but uses more tokens per iteration.
+
+```
+/autoresearch
+Goal: Increase test coverage to 95%
+Verify: npm test -- --coverage | grep All | awk '{print $4}'
+Evaluator: on
+```
 
 ## Setup Phase (Do Once)
 

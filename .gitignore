@@ -9,6 +9,7 @@ Thumbs.db
 .claude/rules/
 .claude/skills/*
 !.claude/skills/autoresearch/
+.claude/*.local.md
 
 # Debug/temp files
 autoresearch-debug-fix-results.tsv
