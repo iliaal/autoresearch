@@ -1,6 +1,6 @@
-# Advanced Patterns — Guards, MCP, CI/CD, and More
+# Advanced Patterns — Guards, Evaluator, Enforcement, MCP, CI/CD, and More
 
-Reference for power users: guard commands, custom verification, MCP integration, CI/CD pipelines, and the principles behind the loop.
+Reference for power users: guard commands (including metric-valued guards), evaluator subagent, mechanical loop enforcement (stop hook, flow check), completion promises, plateau detection, config validation, custom verification, MCP integration, CI/CD pipelines, and the principles behind the loop.
 
 ---
 
@@ -513,11 +513,11 @@ Each command outputs a single number. Claude parses this to make keep/discard de
 Every iteration is appended to the results log in tab-separated format:
 
 ```tsv
-iteration  commit   metric  delta   guard  status    description
-0          a1b2c3d  85.2    0.0     -      baseline  initial state
-1          b2c3d4e  87.1    +1.9    pass   keep      add auth edge case tests
-2          -        86.5    -0.6    -      discard   refactor helpers (broke 2 tests)
-3          c3d4e5f  88.3    +1.2    pass   keep      add error handling tests
+iteration  commit   metric  delta   guard  guard-metric  evaluator  status    description
+0          a1b2c3d  85.2    0.0     -      -             -          baseline  initial state
+1          b2c3d4e  87.1    +1.9    pass   51200         approve    keep      add auth edge case tests
+2          -        86.5    -0.6    -      -             -          discard   refactor helpers (broke 2 tests)
+3          c3d4e5f  88.3    +1.2    pass   51180         flag       keep      add error handling tests
 ```
 
 | Column | Values | Meaning |
@@ -527,6 +527,8 @@ iteration  commit   metric  delta   guard  status    description
 | `metric` | float | Raw metric value from verify command |
 | `delta` | signed float | Change from previous kept iteration |
 | `guard` | `pass`, `fail`, `-` | Guard result; `-` if no guard set |
+| `guard-metric` | float or `-` | Measured guard-metric value (metric-valued guards only) |
+| `evaluator` | `approve`, `flag`, `reject`, `-` | Evaluator verdict; `-` if evaluator is off |
 | `status` | `baseline`, `keep`, `discard`, `rework` | Outcome of this iteration |
 | `description` | string | One-line summary of what changed |
 
@@ -681,6 +683,282 @@ Noise-Runs: 5        # use 5 runs instead of default 3
 | API latency | High | `Noise: high` + `Min-Delta: 5.0` + warm-up |
 
 For detailed noise handling strategies (multi-run, confirmation runs, environment pinning), see the [autonomous loop protocol](../skills/autoresearch/references/autonomous-loop-protocol.md#phase-51-noise-handling).
+
+---
+
+## Evaluator Subagent
+
+By default, an independent Evaluator subagent reviews each change after verification. The implementing agent naturally overvalues its own changes (it just spent effort on them); the Evaluator provides a cold-start second opinion.
+
+### How it works
+
+After Phase 5 (Verify), the main agent dispatches an Evaluator subagent via the Agent tool. The Evaluator receives the goal, scope, diff, metric result, and guard result. It runs in read-only mode, reviews the change independently, and returns one of three verdicts:
+
+| Verdict | Meaning |
+|---------|---------|
+| `approve` | Change genuinely improves the goal |
+| `flag` | Change improves the metric but has concerns (complexity, side effects) |
+| `reject` | Change is problematic despite metric improvement |
+
+The verdict is advisory, not binding. The metric remains the primary decision driver:
+
+- Metric improved + `approve`: keep (standard case)
+- Metric improved + `flag`: keep with caution, the flag is logged for future reference
+- Metric improved + `reject`: the main agent considers the reasoning but may still keep if the metric is mechanical and clearly improved
+
+The verdict is recorded in the `evaluator` column of the results TSV.
+
+### Configuration
+
+```
+/autoresearch
+Goal: Increase test coverage to 95%
+Verify: npm test -- --coverage | grep All | awk '{print $4}'
+Evaluator: on          # default -- independent review after each iteration
+```
+
+Set `Evaluator: off` to skip the subagent and save tokens. Useful for fast iteration cycles where the metric is highly reliable (e.g., test count, error count).
+
+### Full agent separation
+
+For maximum separation of concerns, set `Agents: full`. This replaces the single main agent with a Coordinator that dispatches three subagents:
+
+- **Research subagent** (investigation, git history analysis, pattern detection)
+- **Dev subagent** (implementation, one change per dispatch)
+- **Evaluator subagent** (independent review, same as above)
+
+The Coordinator never writes code directly. This uses more tokens per iteration but provides the strongest bias protection.
+
+```
+/autoresearch
+Goal: Reduce p95 response time
+Verify: npm run bench:api | grep "p95"
+Agents: full
+```
+
+---
+
+## Mechanical Loop Enforcement
+
+Two shell scripts enforce protocol compliance mechanically, independent of Claude's behavior.
+
+### Stop hook (`stop-hook.sh`)
+
+The stop hook prevents Claude from exiting the session while a loop is active. When Claude attempts to stop (reaching the end of its turn), the hook:
+
+1. Checks for the state file (`.claude/autoresearch-loop.local.md`)
+2. If present and the loop hasn't reached max iterations, blocks the exit
+3. Re-injects the continuation prompt from the state file as a new user message
+4. Increments the iteration counter and resets per-iteration flags
+
+This means Claude cannot silently abandon the loop. The iteration continues even if Claude's natural turn would have ended.
+
+**Session isolation:** The state file records the session ID that started the loop. Other Claude sessions on the same repo are not affected.
+
+**When the hook allows exit:**
+- No state file exists (loop not active)
+- Max iterations reached (`Iterations: N`)
+- Completion promise met (see below)
+- State file is corrupted (removed with a warning)
+- Different session ID than the one that started the loop
+
+### Flow check (`flow-check.sh`)
+
+The flow check runs at the end of each iteration (called by the stop hook) and validates that the agent followed the protocol. It produces warnings, not errors -- the loop continues regardless, but warnings are injected into the next iteration's system message so Claude can self-correct.
+
+**What it checks:**
+
+| Check | What it catches |
+|-------|----------------|
+| Results log updated | Agent forgot to log the iteration |
+| At most 1 new commit | Multiple changes in one iteration (violates "one change per iteration") |
+| Outcome declared | Agent didn't set `previous_outcome` in the state file |
+| Verify was run | Agent skipped verification |
+| Guard checked | Guard is configured but wasn't run |
+| Research after failure | Agent didn't investigate after a discard or crash (mandatory) |
+| Clean working tree | Uncommitted changes at end of iteration |
+| Session ID consistency | State file belongs to a different session |
+
+**Example warning in system message:**
+```
+Flow-check warnings: Verify not run (verified flag not set); Research not performed after discard
+```
+
+### State file format
+
+The state file (`.claude/autoresearch-loop.local.md`) uses YAML frontmatter for machine-readable fields and a markdown body for the continuation prompt:
+
+```markdown
+---
+iteration: 5
+max_iterations: 25
+session_id: abc123
+commit_before: a1b2c3d
+previous_outcome: keep
+verified: false
+guard_checked: false
+guard: npm test
+research_done: false
+completion_promise: "All tests passing above 90%"
+evaluator: on
+---
+
+[continuation prompt text here]
+```
+
+The state file is local (not committed) and is automatically cleaned up when the loop ends.
+
+---
+
+## Completion Promise
+
+A Completion-Promise is a semantic exit condition for unbounded loops. Instead of running forever or for N iterations, the loop stops when the agent can truthfully assert that a condition is met.
+
+```
+/autoresearch
+Goal: Increase test coverage to 90%
+Verify: npm test -- --coverage | grep All | awk '{print $4}'
+Completion-Promise: All tests passing above 90%
+```
+
+### How it works
+
+1. The promise text is stored in the state file
+2. At the end of each iteration, the stop hook checks the agent's output for a `<promise>` tag
+3. If the agent outputs `<promise>All tests passing above 90%</promise>` and the text matches exactly, the hook allows exit
+4. The agent should only output the promise tag when the condition is genuinely true
+
+The stop hook's system message reminds the agent of the promise each iteration: `To stop: output <promise>All tests passing above 90%</promise> (ONLY when TRUE)`.
+
+### When to use
+
+| Scenario | Use |
+|----------|-----|
+| Known target with clear completion criteria | `Completion-Promise: Zero type errors in src/` |
+| Quality gate | `Completion-Promise: All lint rules passing` |
+| Coverage target | `Completion-Promise: Coverage above 95% with no failing tests` |
+| Fixed count | Prefer `Iterations: N` instead |
+| Open-ended optimization | Prefer unlimited + `Plateau-Patience` instead |
+
+The promise must be a concrete, verifiable statement. Vague promises like "code is good enough" defeat the purpose.
+
+---
+
+## Metric-Valued Guards
+
+By default, guards are binary: exit code 0 means pass, non-zero means fail. Metric-valued guards extract a number instead, allowing tolerance-based regression checks.
+
+### Why
+
+A binary guard is too strict for some scenarios. If you're optimizing test coverage, you don't want to reject a change just because bundle size grew by 12 bytes. Metric-valued guards let you set a regression threshold: "bundle size can grow up to 5% from baseline, but no more."
+
+### Configuration
+
+```
+/autoresearch
+Goal: Increase test coverage to 95%
+Verify: npx jest --coverage 2>&1 | grep 'All files' | awk '{print $4}'
+Guard: npx esbuild src/index.ts --bundle --minify | wc -c
+Guard-Direction: lower is better
+Guard-Threshold: 5%
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `Guard` | Yes | Command that outputs a number |
+| `Guard-Direction` | Yes (for metric-valued) | `higher is better` or `lower is better` |
+| `Guard-Threshold` | Yes (for metric-valued) | Max allowed regression as % of baseline (e.g., `5%`, `0%` for strict) |
+
+Without `Guard-Direction` and `Guard-Threshold`, the guard operates in the default pass/fail mode.
+
+### How the threshold works
+
+The guard-metric baseline is captured at iteration 0 alongside the primary metric. Each iteration, the guard-metric is compared against that baseline:
+
+```
+If Guard-Direction is "lower is better":
+    pass if guard_metric <= baseline * (1 + threshold/100)
+    Example: baseline 50000 bytes, threshold 5% -> pass if <= 52500
+
+If Guard-Direction is "higher is better":
+    pass if guard_metric >= baseline * (1 - threshold/100)
+    Example: baseline 95% coverage, threshold 5% -> pass if >= 90.25%
+```
+
+`Guard-Threshold: 0%` means strict no-regression: the guard-metric must not worsen at all.
+
+The guard-metric value is tracked in the `guard-metric` column of the results TSV, giving visibility into drift over the course of the run.
+
+---
+
+## Plateau Detection
+
+In unbounded mode, a subtle failure mode exists: the agent keeps iterating and occasionally gets a `keep`, but the *best* metric never actually improves. The loop burns tokens without making real progress. Plateau detection catches this.
+
+### How it works
+
+The loop tracks three values:
+
+- `best_metric` -- the best metric seen so far (initialized to baseline)
+- `best_iteration` -- which iteration achieved it
+- `iterations_since_best` -- how many measured iterations have passed without a new best
+
+After every iteration with a valid metric, the counter updates. Iterations without a valid metric (`no-op`, `metric-error`, `hook-blocked`, `crash`) don't count because the agent didn't get a real signal.
+
+When `iterations_since_best` reaches the patience threshold (default 15), the loop pauses and asks:
+
+```
+Plateau detected -- best metric has not improved in 15 iterations
+  Best: 88.3 (iteration #12)
+  Current: 87.9
+  Last 15 iterations: 4 keeps, 11 discards -- no net gain
+```
+
+Options: stop here, continue with reset patience, or change strategy.
+
+### Configuration
+
+```
+/autoresearch
+Goal: Reduce bundle size below 200KB
+Verify: npx esbuild src/index.ts --bundle --minify | wc -c
+Plateau-Patience: 20    # check after 20 iterations without improvement (default: 15)
+```
+
+Set `Plateau-Patience: off` to disable plateau detection entirely. Use this for overnight runs where you accept the token cost and want no interruptions.
+
+**Bounded mode:** Plateau detection is disabled. The iteration limit already bounds the run, and the agent should use all N iterations to explore.
+
+---
+
+## Config Validation
+
+Before the loop starts, `validate-config.sh` performs pre-flight checks to catch configuration problems early. If validation fails, the loop does not start.
+
+### What it checks
+
+| Check | Error or Warning | What it catches |
+|-------|-----------------|-----------------|
+| Git repository exists | Error | Running outside a repo |
+| Not detached HEAD | Warning | Accidental detached HEAD state |
+| Working tree clean | Error | Uncommitted changes that would interfere with the loop's git operations |
+| Direction valid | Error | Typos in direction (must be `higher is better` or `lower is better`) |
+| Guard-Direction valid | Error | Same validation for metric-valued guards |
+| Scope resolves to files | Warning | Glob pattern that matches nothing (likely a typo) |
+| Verify command runs | Error | Command that fails or doesn't exist |
+| Verify produces a number | Error | Command output with no extractable numeric value |
+| Guard command runs | Error | Guard command that fails on current codebase |
+| Guard produces a number | Error | Metric-valued guard with non-numeric output |
+
+### Troubleshooting
+
+**"Verify command failed"** -- Run the verify command manually in your terminal to see the full error. Common causes: missing dependency, wrong path, test suite not set up.
+
+**"Verify command produced no numeric output"** -- The command runs but its output doesn't contain a number. Check that your `grep`/`awk`/`jq` pipeline actually extracts a number. Run `/autoresearch:plan` to get help constructing the right command.
+
+**"Working tree has uncommitted changes"** -- The loop needs a clean starting point for its git operations. Run `git stash` or commit your changes first.
+
+**"Scope matched no files"** -- Double-check your glob syntax. Use `ls src/**/*.ts` (or equivalent) to verify the pattern matches what you expect.
 
 ---
 

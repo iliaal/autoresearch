@@ -85,7 +85,7 @@ Before looping, Claude performs a one-time setup:
 6. **Activate loop state** — creates state file and activates the stop hook
 7. **Confirm and go** — shows setup, then begins the loop
 
-### 8 Critical Rules
+### 10 Critical Rules
 
 | # | Rule |
 |---|------|
@@ -415,6 +415,21 @@ Guard: npm test
 
 If the metric improves but the guard fails, Claude reworks the optimization (up to 2 attempts). Guard/test files are never modified.
 
+### Metric-Valued Guards
+
+By default, guards are binary (exit 0 = pass). For guards that measure a number, you can set a regression threshold instead:
+
+```
+/autoresearch
+Goal: Increase test coverage to 95%
+Verify: npx jest --coverage 2>&1 | grep 'All files' | awk '{print $4}'
+Guard: npx esbuild src/index.ts --bundle --minify | wc -c
+Guard-Direction: lower is better
+Guard-Threshold: 5%
+```
+
+This means: "optimize coverage, but reject any change that grows bundle size more than 5% from baseline." The guard-metric is tracked in the results log for visibility into drift. See [Advanced Patterns](guide/advanced-patterns.md#metric-valued-guards) for details.
+
 > **Credit:** Guard was contributed by [@pronskiy](https://github.com/pronskiy) (JetBrains) in [PR #7](https://github.com/uditgoenka/autoresearch/pull/7).
 
 ---
@@ -444,6 +459,21 @@ Every 10 iterations, Claude prints a progress summary. Bounded loops print a fin
 | Resource exhaustion | Revert, try smaller variant |
 | Infinite loop / hang | Kill after timeout, revert |
 | External dependency | Skip, log, try different approach |
+
+---
+
+## Plateau Detection
+
+In unbounded mode, the loop tracks whether the *best* metric is still improving. If 15 consecutive measured iterations pass without a new best, the loop pauses and asks whether to stop, continue, or change strategy. This prevents burning tokens on a local optimum.
+
+```
+/autoresearch
+Goal: Reduce bundle size below 200KB
+Verify: npx esbuild src/index.ts --bundle --minify | wc -c
+Plateau-Patience: 20    # default: 15, or "off" to disable
+```
+
+Bounded mode (`Iterations: N`) ignores this setting. See [Advanced Patterns](guide/advanced-patterns.md#plateau-detection) for details.
 
 ---
 

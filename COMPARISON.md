@@ -28,7 +28,7 @@ The philosophy is the same. The scope is radically different.
 | **Created by** | Andrej Karpathy (ex-Tesla AI, OpenAI) | Udit Goenka (AI Product Expert, Founder) |
 | **Released** | March 2026 | March 2026 |
 | **Language** | Python (PyTorch) | Markdown (Claude Code skill system) |
-| **LOC** | ~630 (train.py) | ~5,000+ across skill definitions and references |
+| **LOC** | ~630 (train.py) | ~6,000+ across skill definitions, references, and enforcement scripts |
 | **Runtime** | Python + NVIDIA GPU + CUDA | Claude Code (any OS, any project, any language) |
 | **Domain** | ML model training only | Any domain with a measurable metric |
 | **Metric** | val_bpb (validation bits per byte) | Any mechanical metric you define |
@@ -325,6 +325,12 @@ autoresearch/
 | Stuck detection | ❌ None | ✅ Auto-escalates after 5 consecutive discards |
 | Stuck strategy | N/A | Re-reads all files, combines near-misses, tries radical changes |
 | Precondition checks | ❌ None | ✅ Clean git tree, no stale locks, not detached HEAD, baseline established |
+| Config validation | ❌ None | ✅ Dry-runs verify/guard commands, validates scope globs, checks direction |
+| Metric-valued guards | ❌ None | ✅ Guards with regression thresholds (e.g., bundle size +5% max) |
+| Evaluator subagent | ❌ None | ✅ Independent post-verify review (approve/flag/reject), advisory |
+| Mechanical enforcement | ❌ None | ✅ Stop hook prevents exit, flow check validates protocol compliance |
+| Plateau detection | ❌ None | ✅ Pauses after N iterations without best-metric improvement |
+| Completion promise | ❌ None | ✅ Semantic exit condition via `<promise>` tag matching |
 
 ### Git Integration
 
@@ -408,10 +414,28 @@ Takes a seed scenario and generates situations across 12 dimensions: happy path,
 ### 10. Autonomous Documentation (`/autoresearch:learn`)
 4-mode documentation engine: init (create from scratch), update (refresh existing), check (read-only health report), summarize (quick overview). Scouts codebase, detects project type, generates docs with Mermaid diagrams and cross-references, then validates and iteratively fixes until docs match reality. Auto-generates conditional docs (API reference, testing guide, config guide, changelog) when signals detected.
 
-### 11. Noise Handling
+### 11. Mechanical Loop Enforcement (Stop Hook + Flow Check)
+Karpathy's loop relies on the agent's discipline to keep iterating. Claude Autoresearch enforces it mechanically with two shell scripts. The **stop hook** intercepts session exit, blocks it while a loop is active, and re-injects the continuation prompt. The **flow check** validates protocol compliance after each iteration (verify was run, guard was checked, research was done after failures, at most one commit per iteration, clean working tree). Violations produce warnings injected into the next iteration's system message.
+
+### 12. Evaluator Subagent
+Karpathy's loop has no separation between implementing and evaluating. Claude Autoresearch dispatches an independent Evaluator subagent after each verification. The Evaluator receives the goal, diff, and metric result, then returns `approve`, `flag`, or `reject`. This combats self-evaluation bias. Set `Evaluator: off` to skip it, or `Agents: full` for complete separation (Coordinator/Research/Dev/Evaluator).
+
+### 13. Completion Promise
+Karpathy's loop has no semantic exit condition. Claude Autoresearch supports `Completion-Promise:` -- a text condition that, when the agent can truthfully assert it, triggers the stop hook to allow exit. Example: `Completion-Promise: All tests passing above 90%`. The agent outputs a `<promise>` tag when the condition is met; the hook matches it exactly.
+
+### 14. Metric-Valued Guards
+Karpathy has no guard mechanism at all. Claude Autoresearch extends its pass/fail guards with a metric-valued mode: the guard extracts a number and checks it against a regression threshold. Example: "bundle size can grow up to 5% from baseline, but no more." Configured via `Guard-Direction:` and `Guard-Threshold:`.
+
+### 15. Plateau Detection
+Karpathy's loop has no stuck detection beyond the agent's own judgment. Claude Autoresearch tracks whether the *best* metric is improving. If 15 consecutive measured iterations pass without a new best (configurable via `Plateau-Patience:`), the loop pauses and asks the user to decide: stop, continue, or change strategy. Disabled in bounded mode.
+
+### 16. Config Validation
+Karpathy has no pre-flight validation. Claude Autoresearch runs `validate-config.sh` before the loop starts: checks git state, dry-runs verify and guard commands, validates that scope globs resolve to files, confirms numeric output, and validates direction fields. The loop does not start if validation fails.
+
+### 17. Noise Handling
 Real-world metrics fluctuate (benchmark times, Lighthouse scores). Claude Autoresearch supports multi-run verification (run verify 3-5 times, use median), minimum delta thresholds (only keep if improvement exceeds noise floor), and confirmation runs.
 
-### 12. Crash Recovery Protocol
+### 18. Crash Recovery Protocol
 | Failure | Karpathy | Claude Autoresearch |
 |---------|----------|---------------------|
 | Syntax error | Agent may keep iterating on broken code | Fix immediately, don't count as iteration |
@@ -420,7 +444,7 @@ Real-world metrics fluctuate (benchmark times, Lighthouse scores). Claude Autore
 | Infinite loop | Loop hangs indefinitely | Kill after timeout, revert |
 | External dependency | Loop fails | Skip, log, try different approach |
 
-### 13. Stuck Escalation
+### 19. Stuck Escalation
 After 5 consecutive discards, Claude auto-escalates:
 1. Re-reads ALL in-scope files from scratch
 2. Re-reads the original goal statement
@@ -431,10 +455,10 @@ After 5 consecutive discards, Claude auto-escalates:
 
 Karpathy's loop has no stuck detection — it just keeps trying.
 
-### 14. CI/CD Integration
+### 20. CI/CD Integration
 GitHub Actions, GitLab CI, and pre-commit hook examples for automated nightly optimization, security gates on PRs, and auto-fix workflows. None of this exists in Karpathy's version.
 
-### 15. MCP Server Integration
+### 21. MCP Server Integration
 Claude Autoresearch can use any MCP server during the loop — databases (PostgreSQL), analytics platforms, external APIs, Puppeteer/Playwright, Slack, Stripe, Sentry, Cloudflare. This enables real-time data-driven iteration against live systems.
 
 ---
@@ -525,7 +549,7 @@ The cost: it doesn't directly train models or leverage GPU compute.
 
 **Karpathy's autoresearch** proved that autonomous iteration works — a 630-line script, one metric, one file, and the discipline to let the agent run. It's a breakthrough demonstration focused on ML training.
 
-**Claude Autoresearch** takes that proof and asks: *what if this worked for everything?* It generalizes the principles into a skill system with 9 specialized commands, interactive setup, guard safety nets, noise handling, crash recovery, and command chaining — all running inside Claude Code on any project, any language, any domain.
+**Claude Autoresearch** takes that proof and asks: *what if this worked for everything?* It generalizes the principles into a skill system with 10 specialized commands, interactive setup, guard safety nets (including metric-valued guards with regression thresholds), mechanical loop enforcement, evaluator subagent, plateau detection, completion promises, config validation, noise handling, crash recovery, and command chaining -- all running inside Claude Code on any project, any language, any domain.
 
 Same philosophy. Same loop. Radically different scope.
 

@@ -42,7 +42,7 @@ Everything you need to master autonomous iteration — from first run to advance
 | [/autoresearch:reason](autoresearch-reason.md) | Adversarial refinement — blind judge convergence for subjective decisions |
 | [Chains & Combinations](chains-and-combinations.md) | Multi-command pipelines and chain patterns |
 | [Examples by Domain](examples-by-domain.md) | Real-world examples: software, sales, marketing, DevOps, ML, HR |
-| [Advanced Patterns](advanced-patterns.md) | Guards, MCP servers, CI/CD, custom scripts, FAQ |
+| [Advanced Patterns](advanced-patterns.md) | Guards, evaluator, enforcement hooks, completion promises, plateau detection, config validation, MCP, CI/CD, FAQ |
 | **[Scenario Guides](scenario/)** | **11 real-world scenario walkthroughs — chat, SaaS, CI/CD, healthcare, finance, IoT, and more** |
 
 ---
