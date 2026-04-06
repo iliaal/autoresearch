@@ -36,6 +36,13 @@ fi
 
 # Strip leading 'v' if provided
 VERSION="${VERSION#v}"
+
+# Validate version format: X.Y.Z or X.Y.Z-pre.release (semver)
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9._-]+)?$ ]]; then
+  echo "Error: Invalid version format '${VERSION}'. Expected: X.Y.Z (e.g., 1.7.0)"
+  exit 1
+fi
+
 TAG="v${VERSION}"
 BRANCH="release/${VERSION}"
 PLUGIN_JSON="claude-plugin/.claude-plugin/plugin.json"
