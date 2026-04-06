@@ -158,7 +158,7 @@ sys.exit(0)
 
 ## Using with MCP Servers
 
-Any MCP server configured in Claude Code is available during the loop. This enables real-time data-driven iteration — Claude can query live databases, analytics platforms, or external APIs as part of each verify step.
+Any MCP server configured in Claude Code is available during the loop. Claude can query live databases, analytics platforms, or external APIs as part of each verify step.
 
 ### Database-aware optimization
 
@@ -610,7 +610,7 @@ Scope: src/api/payments/**/*.ts
 
 ### 1. Constraint = Enabler
 
-Autonomy succeeds through intentional constraint, not despite it. A narrow scope that fits agent context, a fixed iteration budget, and a single mechanical success criterion are what make unsupervised improvement possible.
+Intentional constraint is what makes autonomy work. A narrow scope that fits agent context, a fixed iteration budget, and a single mechanical success criterion are the ingredients for unsupervised improvement.
 
 | Autoresearch | Generalized |
 |---|---|
@@ -648,11 +648,11 @@ Verification speed determines experiment throughput. A 30-second verify command 
 
 ### 5. Iteration Cost Shapes Behavior
 
-Cheap iteration encourages bold exploration and many experiments. Expensive iteration forces Claude to be conservative. Optimize verify speed to unlock better results.
+When iteration is cheap, Claude explores boldly and runs many experiments. When it's expensive, Claude plays it safe. Faster verify commands directly produce better results.
 
 ### 6. Git as Memory
 
-Every successful change is committed before verification. Failures are reverted. The git log becomes Claude's research journal — enabling causality tracking, stacking wins, and pattern learning across iterations.
+Every successful change is committed before verification. Failures are reverted. Claude reads the git log as a research journal, tracking causality, stacking wins, and learning patterns across iterations.
 
 ### 7. Honest Limitations
 

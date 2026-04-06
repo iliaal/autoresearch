@@ -4,7 +4,7 @@
 
 **The original ML research loop vs the universal autonomous improvement engine**
 
-*How a 630-line Python training script inspired a domain-agnostic skill system built on Claude Code*
+*From a 630-line Python training script to a domain-agnostic skill system built on Claude Code*
 
 </div>
 
@@ -14,7 +14,7 @@
 
 In March 2026, **[Andrej Karpathy](https://github.com/karpathy)** released [autoresearch](https://github.com/karpathy/autoresearch) — a 630-line Python script that let AI agents autonomously optimize a GPT language model overnight. In 2 days, a single agent ran **700 experiments**, discovered **20 optimizations**, and achieved an **11% speedup** on already-optimized code. The repo hit 26,000 GitHub stars in under a week.
 
-**[Claude Autoresearch](https://github.com/uditgoenka/autoresearch)** by **[Udit Goenka](https://udit.co)** takes Karpathy's core principles — constraint, mechanical metric, autonomous iteration — and generalizes them into a **Claude Code skill system** with 10 commands that work on **any domain**: code, content, marketing, sales, security, DevOps, HR, or anything with a measurable number.
+**[Claude Autoresearch](https://github.com/uditgoenka/autoresearch)** by **[Udit Goenka](https://udit.co)** takes Karpathy's core principles (constraint, mechanical metric, autonomous iteration) and generalizes them into a **Claude Code skill system** with 10 commands that work on **any domain**: code, content, marketing, sales, security, DevOps, HR, or anything with a measurable number.
 
 The philosophy is the same. The scope is radically different.
 
@@ -494,7 +494,7 @@ The cost: it only works for ML training optimization on a single GPU.
 
 > *"Set the GOAL → Claude runs the LOOP → You wake up to results"*
 
-Claude Autoresearch's design trades ML-specific depth for universal breadth. The same 7 principles apply, but scope, metric, and verify are user-defined — making it work for any domain. The 11 subcommands (including the core loop) add specialized workflows that don't exist in Karpathy's version:
+Claude Autoresearch's design trades ML-specific depth for universal breadth. The same 7 principles apply, but scope, metric, and verify are user-defined — making it work for any domain. The 10 subcommands add specialized workflows that don't exist in Karpathy's version:
 
 - **Debugging** and **fixing** are fundamentally different from optimization — they have different loop structures, different success criteria, and different strategies.
 - **Security auditing** is adversarial — it requires threat modeling, not metric improvement.
@@ -549,7 +549,7 @@ The cost: it doesn't directly train models or leverage GPU compute.
 
 **Karpathy's autoresearch** proved that autonomous iteration works — a 630-line script, one metric, one file, and the discipline to let the agent run. It's a breakthrough demonstration focused on ML training.
 
-**Claude Autoresearch** takes that proof and asks: *what if this worked for everything?* It generalizes the principles into a skill system with 10 specialized commands, interactive setup, guard safety nets (including metric-valued guards with regression thresholds), mechanical loop enforcement, evaluator subagent, plateau detection, completion promises, config validation, noise handling, crash recovery, and command chaining -- all running inside Claude Code on any project, any language, any domain.
+**Claude Autoresearch** takes that proof and generalizes it. 10 specialized commands. Interactive setup. Guard safety nets with regression thresholds. Mechanical loop enforcement. An independent evaluator subagent. Plateau detection. Completion promises. Config validation. Noise handling. Crash recovery. Command chaining. All running inside Claude Code on any project, any language, any domain.
 
 Same philosophy. Same loop. Radically different scope.
 

@@ -214,7 +214,7 @@ Claude reads all files, establishes a baseline, and starts iterating — one cha
 
 ## /autoresearch:plan — Goal → Config Wizard
 
-The hardest part isn't the loop — it's defining Scope, Metric, and Verify correctly. `/autoresearch:plan` converts your plain-language goal into a validated, ready-to-execute configuration.
+Defining Scope, Metric, and Verify correctly is harder than running the loop itself. `/autoresearch:plan` converts your plain-language goal into a validated, ready-to-execute configuration.
 
 ```
 /autoresearch:plan
@@ -274,7 +274,7 @@ Auto-detects what you're shipping (code PR, deployment, blog post, email campaig
 
 ## /autoresearch:debug — Autonomous Bug Hunter (v1.3.0)
 
-Scientific method meets autoresearch loop. Doesn't stop at one bug — iteratively hunts ALL bugs using falsifiable hypotheses, evidence-based investigation, and 7 investigation techniques.
+Applies the scientific method to the autoresearch loop. Doesn't stop at one bug, but iteratively hunts ALL bugs using falsifiable hypotheses, evidence-based investigation, and 7 techniques.
 
 ```
 /autoresearch:debug
@@ -335,7 +335,7 @@ Dynamic doc discovery (scans `docs/*.md`), project-type detection, validation-fi
 
 Before you debug, fix, or ship — get 5 expert perspectives in 2 minutes.
 
-`/autoresearch:predict` simulates a team of experts (Architect, Security Analyst, Performance Engineer, Reliability Engineer, Devil's Advocate) who independently analyze your code, debate findings, and reach consensus. Chain the output directly to any other command:
+Five expert personas (Architect, Security Analyst, Performance Engineer, Reliability Engineer, Devil's Advocate) independently analyze your code, debate findings, and reach consensus. You can chain the output directly to any other command:
 
 - `/autoresearch:predict --chain debug` — pre-ranked hypotheses before debugging
 - `/autoresearch:predict --chain security` — multi-persona red team analysis
@@ -345,7 +345,7 @@ Before you debug, fix, or ship — get 5 expert perspectives in 2 minutes.
 
 ## /autoresearch:reason — Adversarial Refinement (v1.9.0)
 
-Extends autoresearch to **subjective domains** where no objective metric exists. The blind judge panel IS the fitness function — it's val_bpb for architecture decisions, product strategy, content quality, and design debates.
+Handles **subjective domains** where no objective metric exists. The blind judge panel IS the fitness function, playing the same role val_bpb does for ML: architecture decisions, product strategy, content quality, design debates.
 
 ```
 /autoresearch:reason
@@ -375,7 +375,7 @@ Iterations: 8
 
 ## /autoresearch:scenario — Scenario Explorer (v1.6.0)
 
-Autonomous scenario exploration engine. Takes a seed scenario and iteratively generates situations across 12 dimensions — happy paths, errors, edge cases, abuse, scale, concurrency, temporal, data variation, permissions, integrations, recovery, and state transitions.
+Give it a seed scenario and it iteratively generates situations across 12 dimensions: happy paths, errors, edge cases, abuse, scale, concurrency, temporal, data variation, permissions, integrations, recovery, and state transitions.
 
 ```
 /autoresearch:scenario
@@ -401,7 +401,7 @@ Adaptive setup: provides 4-8 questions based on how much context you give. Just 
 
 ## Guard — Prevent Regressions (v1.0.4)
 
-When optimizing a metric, the loop might break existing behavior. **Guard** is an optional safety net.
+Optimizing one metric can break existing behavior. **Guard** is an optional safety net.
 
 ```
 /autoresearch
