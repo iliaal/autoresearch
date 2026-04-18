@@ -1,6 +1,6 @@
 ---
 name: cancel
-description: Stop the active autoresearch loop.
+description: Use when user types /autoresearch:cancel or asks to stop/abort the active autoresearch loop. Removes the state file and allows session exit.
 ---
 
 Check if an autoresearch loop is currently active by reading `.claude/autoresearch-loop.local.md`.
